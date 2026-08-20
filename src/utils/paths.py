@@ -91,3 +91,24 @@ PATH_MASC_OEDB = os.path.join(
     PATH_MASCARAS,
     "OEDB"
 )
+
+# resultados
+PATH_RESULTS = os.path.join(
+    PATH_RAIZ,
+    "results"
+)
+
+PATH_MODELOS = os.path.join(
+    PATH_RESULTS,
+    "modelos"
+)
+
+PATH_MELHOR_ATUNET = os.path.join(
+    PATH_MODELOS,
+    "melhor_atunet.pt"
+)
+
+PATH_MELHOR_UNET = os.path.join(
+    PATH_MODELOS,
+    "melhor_unet.pt"
+)

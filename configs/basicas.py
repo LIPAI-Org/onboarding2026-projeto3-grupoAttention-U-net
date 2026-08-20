@@ -4,6 +4,7 @@ import torch.cuda as cuda
 
 from torch.nn import BCEWithLogitsLoss
 from torch.optim import Adam
+from torch.optim.lr_scheduler import StepLR
 
 from src.losses.dice_loss import DiceLoss
 
@@ -14,7 +15,10 @@ NUM_EPOCAS = 50
 LIMIAR = 0.5
 OTIMIZADOR = Adam
 DEVICE = "cuda" if cuda.is_available() else "cpu"
-TAXA_APRENDIZADO = 1e-4
+TAXA_APRENDIZADO = 1e-3
 TAM_BATCH = 8
 F_LOSS_1 = BCEWithLogitsLoss()
 F_LOSS_2 = DiceLoss()
+REDUTOR_LR = StepLR
+TAM_STEP = 10
+GAMMA = 0.1
