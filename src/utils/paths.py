@@ -103,6 +103,26 @@ PATH_MODELOS = os.path.join(
     "modelos"
 )
 
+PATH_PLOTS = os.path.join(
+    PATH_RESULTS,
+    "plots"
+)
+
+PATH_PLOTS_CURVAS_APRENDIZADO = os.path.join(
+    PATH_PLOTS,
+    "curvas_aprendizado"
+)
+
+PATH_PLOTS_CURVAS_APRENDIZADO_LOSS = os.path.join(
+    PATH_PLOTS_CURVAS_APRENDIZADO,
+    "loss"
+)
+
+PATH_PLOTS_CURVAS_APRENDIZADO_MDICE = os.path.join(
+    PATH_PLOTS_CURVAS_APRENDIZADO,
+    "mdice"
+)
+
 PATH_MELHOR_ATUNET = os.path.join(
     PATH_MODELOS,
     "melhor_atunet.pt"
