@@ -20,6 +20,7 @@ from configs.basicas import (
 from src.utils.checkpoints import salvar_checkpoint
 from src.treino.validacao import validar
 from src.utils.seed import fixar_seed
+import curvas_treino
 
 def treinar_uma_epoca(
     nome: str,
@@ -115,5 +116,8 @@ def treinar_modelo(
 
     print(f"\nTreinamento de '{nome}' concluído com sucesso!")
     print(f"Melhor mDice atingido: {melhor_mdice_atual:.4f}\n")
+
+    curvas_treino.plotar_losses(nome, historico_loss_treino, historico_loss_val)
+    curvas_treino.plotar_mdice_val(nome, historico_mdice_val)
 
     return modelo, melhor_mdice_atual, historico
