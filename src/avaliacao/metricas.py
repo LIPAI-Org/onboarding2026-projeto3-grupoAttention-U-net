@@ -2,12 +2,27 @@
 
 from __future__ import annotations
 
-from typing import Dict
+from typing import Literal, TypedDict
 
 import torch
 
 
 EPSILON = 1e-7
+Classe = Literal[0, 1]
+
+
+class MetricasClasse(TypedDict):
+    dice: float
+    iou: float
+    precision: float
+    recall: float
+
+
+class MetricasBinarias(TypedDict):
+    classe_0: MetricasClasse
+    classe_1: MetricasClasse
+    mdice: float
+    miou: float
 
 
 def _validar_epsilon(epsilon: float) -> None:
@@ -18,14 +33,20 @@ def _validar_epsilon(epsilon: float) -> None:
 def _validar_mascaras(predicao: torch.Tensor, mascara: torch.Tensor) -> None:
     if predicao.shape != mascara.shape:
         raise ValueError(
-            f"Recebidos: {tuple(predicao.shape)} e {tuple(mascara.shape)}."
+            f"{tuple(predicao.shape)} e {tuple(mascara.shape)}."
         )
     if predicao.ndim != 4 or predicao.shape[1] != 1:
         raise ValueError(
-            f"Recebido: {tuple(predicao.shape)}."
+            f"{tuple(predicao.shape)}."
         )
     if predicao.device != mascara.device:
         raise ValueError("predicao e mascara devem estar no mesmo device.")
+
+    for nome, tensor in (("predicao", predicao), ("mascara", mascara)):
+        if not torch.isfinite(tensor).all().item():
+            raise ValueError(f"{nome} não pode conter NaN ou infinito.")
+        if not torch.logical_or(tensor == 0, tensor == 1).all().item():
+            raise ValueError(f"{nome} deve conter apenas os valores 0 e 1.")
 
 
 def _validar_classe(classe: int) -> None:
@@ -34,79 +55,81 @@ def _validar_classe(classe: int) -> None:
 
 
 def _contagens_por_classe(
-    predicao: torch.Tensor, mascara: torch.Tensor, classe: int
+    predicao: torch.Tensor, mascara: torch.Tensor, classe: Classe
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     _validar_mascaras(predicao, mascara)
     _validar_classe(classe)
 
-    predicao_classe = predicao if classe == 1 else 1.0 - predicao
-    mascara_classe = mascara if classe == 1 else 1.0 - mascara
+    predicao_float = predicao.to(dtype=torch.float32)
+    mascara_float = mascara.to(dtype=torch.float32)
+    if classe == 0:
+        predicao_float = 1.0 - predicao_float
+        mascara_float = 1.0 - mascara_float
 
-    verdadeiros_positivos = (predicao_classe * mascara_classe).sum()
-    falsos_positivos = (predicao_classe * (1.0 - mascara_classe)).sum()
-    falsos_negativos = ((1.0 - predicao_classe) * mascara_classe).sum()
-    return verdadeiros_positivos, falsos_positivos, falsos_negativos
+    tp = (predicao_float * mascara_float).sum()
+    fp = (predicao_float * (1.0 - mascara_float)).sum()
+    fn = ((1.0 - predicao_float) * mascara_float).sum()
+    return tp, fp, fn
 
 
-def _divisao_segura(
-    numerador: torch.Tensor, denominador: torch.Tensor, epsilon: float
+def _razao(
+    numerador: torch.Tensor,
+    denominador: torch.Tensor,
+    epsilon: float,
+    valor_se_vazio: float,
 ) -> torch.Tensor:
     _validar_epsilon(epsilon)
     resultado = numerador / denominador.clamp_min(epsilon)
-    # Se não há positivos reais nem preditos, a classe foi acertada por ausência.
-    return torch.where(denominador == 0, torch.ones_like(resultado), resultado)
+    return torch.where(
+        denominador == 0,
+        torch.full_like(resultado, valor_se_vazio),
+        resultado,
+    )
 
 
 def logits_para_mascara(logits: torch.Tensor, threshold: float = 0.5) -> torch.Tensor:
     if logits.ndim != 4 or logits.shape[1] != 1:
         raise ValueError(
-            f"Recebido: {tuple(logits.shape)}."
+            "logits devem ter formato [N, 1, H, W]; recebido "
+            f"{tuple(logits.shape)}."
         )
+    if not torch.is_floating_point(logits):
+        raise TypeError("logits devem ter tipo de ponto flutuante.")
     if not 0.0 <= threshold <= 1.0:
         raise ValueError("threshold deve estar entre 0 e 1.")
+    if torch.isnan(logits).any().item():
+        raise ValueError("logits não podem conter NaN.")
 
-    probabilidades = torch.sigmoid(logits)
-    return (probabilidades >= threshold).to(dtype=torch.float32)
+    return (torch.sigmoid(logits) >= threshold).to(dtype=torch.float32)
 
 
-def dice_por_classe(
-    predicao: torch.Tensor,
-    mascara: torch.Tensor,
-    classe: int,
-    epsilon: float = EPSILON,
-) -> torch.Tensor:
+def dice_por_classe(predicao: torch.Tensor, mascara: torch.Tensor, classe: Classe, epsilon: float = EPSILON) -> torch.Tensor:
     tp, fp, fn = _contagens_por_classe(predicao, mascara, classe)
-    return _divisao_segura(2.0 * tp, 2.0 * tp + fp + fn, epsilon)
+    return _razao(2.0 * tp, 2.0 * tp + fp + fn, epsilon, valor_se_vazio=1.0)
 
 
-def iou_por_classe(
-    predicao: torch.Tensor,
-    mascara: torch.Tensor,
-    classe: int,
-    epsilon: float = EPSILON,
-) -> torch.Tensor:
+def iou_por_classe(predicao: torch.Tensor, mascara: torch.Tensor, classe: Classe, epsilon: float = EPSILON) -> torch.Tensor:
     tp, fp, fn = _contagens_por_classe(predicao, mascara, classe)
-    return _divisao_segura(tp, tp + fp + fn, epsilon)
+    return _razao(tp, tp + fp + fn, epsilon, valor_se_vazio=1.0)
 
 
-def precision_por_classe(
-    predicao: torch.Tensor,
-    mascara: torch.Tensor,
-    classe: int,
-    epsilon: float = EPSILON,
-) -> torch.Tensor:
+def precision_por_classe(predicao: torch.Tensor, mascara: torch.Tensor, classe: Classe, epsilon: float = EPSILON) -> torch.Tensor:
     tp, fp, _ = _contagens_por_classe(predicao, mascara, classe)
-    return _divisao_segura(tp, tp + fp, epsilon)
+    return _razao(tp, tp + fp, epsilon, valor_se_vazio=0.0)
 
 
-def recall_por_classe(
-    predicao: torch.Tensor,
-    mascara: torch.Tensor,
-    classe: int,
-    epsilon: float = EPSILON,
-) -> torch.Tensor:
+def recall_por_classe(predicao: torch.Tensor, mascara: torch.Tensor, classe: Classe, epsilon: float = EPSILON) -> torch.Tensor:
     tp, _, fn = _contagens_por_classe(predicao, mascara, classe)
-    return _divisao_segura(tp, tp + fn, epsilon)
+    return _razao(tp, tp + fn, epsilon, valor_se_vazio=0.0)
+
+
+def _metricas_de_contagens(tp: torch.Tensor, fp: torch.Tensor, fn: torch.Tensor, epsilon: float) -> dict[str, torch.Tensor]:
+    return {
+        "dice": _razao(2.0 * tp, 2.0 * tp + fp + fn, epsilon, valor_se_vazio=1.0),
+        "iou": _razao(tp, tp + fp + fn, epsilon, valor_se_vazio=1.0),
+        "precision": _razao(tp, tp + fp, epsilon, valor_se_vazio=0.0),
+        "recall": _razao(tp, tp + fn, epsilon, valor_se_vazio=0.0),
+    }
 
 
 def calcular_metricas(
@@ -114,58 +137,51 @@ def calcular_metricas(
     mascara: torch.Tensor,
     threshold: float = 0.5,
     epsilon: float = EPSILON,
-) -> Dict[str, Dict[str, float] | float]:
+) -> MetricasBinarias:
+    _validar_epsilon(epsilon)
     predicao = logits_para_mascara(logits, threshold)
     _validar_mascaras(predicao, mascara)
-    _validar_epsilon(epsilon)
 
-    metricas_por_classe: Dict[str, Dict[str, torch.Tensor]] = {}
-    for classe in (0, 1):
-        chave = f"classe_{classe}"
-        metricas_por_classe[chave] = {
-            "dice": dice_por_classe(predicao, mascara, classe, epsilon),
-            "iou": iou_por_classe(predicao, mascara, classe, epsilon),
-            "precision": precision_por_classe(predicao, mascara, classe, epsilon),
-            "recall": recall_por_classe(predicao, mascara, classe, epsilon),
-        }
-
-    mdice = (metricas_por_classe["classe_0"]["dice"] + metricas_por_classe["classe_1"]["dice"]) / 2.0
-    miou = (metricas_por_classe["classe_0"]["iou"] + metricas_por_classe["classe_1"]["iou"]) / 2.0
-
+    por_classe = {
+        classe: _metricas_de_contagens(*_contagens_por_classe(predicao, mascara, classe), epsilon)
+        for classe in (0, 1)
+    }
+    classe_0 = {nome: valor.item() for nome, valor in por_classe[0].items()}
+    classe_1 = {nome: valor.item() for nome, valor in por_classe[1].items()}
     return {
-        "classe_0": {nome: valor.item() for nome, valor in metricas_por_classe["classe_0"].items()},
-        "classe_1": {nome: valor.item() for nome, valor in metricas_por_classe["classe_1"].items()},
-        "mdice": mdice.item(),
-        "miou": miou.item(),
+        "classe_0": classe_0,
+        "classe_1": classe_1,
+        "mdice": (por_classe[0]["dice"] + por_classe[1]["dice"]).div(2.0).item(),
+        "miou": (por_classe[0]["iou"] + por_classe[1]["iou"]).div(2.0).item(),
     }
 
 
 if __name__ == "__main__":
-    # Testes simples dos cenários descritos no projeto. Não são executados ao importar.
+    def logits_da_mascara(predicao: torch.Tensor) -> torch.Tensor:
+        return torch.where(
+            predicao == 1,
+            torch.full_like(predicao, 10.0),
+            torch.full_like(predicao, -10.0),
+        )
+
     mascara_teste = torch.tensor([[[[1.0, 1.0], [0.0, 0.0]]]])
+    perfeitos = calcular_metricas(logits_da_mascara(mascara_teste), mascara_teste)
+    assert all(perfeitos[classe][metrica] == 1.0 for classe in ("classe_0", "classe_1") for metrica in ("dice", "iou", "precision", "recall"))
 
-    def _logits_da_mascara(predicao_teste: torch.Tensor) -> torch.Tensor:
-        return torch.where(predicao_teste == 1, torch.tensor(10.0), torch.tensor(-10.0))
-
-    # Caso 1: predição perfeita.
-    perfeitos = calcular_metricas(_logits_da_mascara(mascara_teste), mascara_teste)
-    for classe in ("classe_0", "classe_1"):
-        for metrica in ("dice", "iou", "precision", "recall"):
-            assert perfeitos[classe][metrica] == 1.0
-
-    # Caso 2: nenhuma interseção entre predição e máscara.
-    oposta = 1.0 - mascara_teste
-    sem_intersecao = calcular_metricas(_logits_da_mascara(oposta), mascara_teste)
-    for classe in ("classe_0", "classe_1"):
-        for metrica in ("dice", "iou", "precision", "recall"):
-            assert sem_intersecao[classe][metrica] == 0.0
-
-    # Caso 3: TP = FP = FN = 1 para a classe positiva.
     parcial = torch.tensor([[[[1.0, 0.0], [1.0, 0.0]]]])
-    resultado_parcial = calcular_metricas(_logits_da_mascara(parcial), mascara_teste)
-    assert abs(resultado_parcial["classe_1"]["dice"] - 0.5) < EPSILON
-    assert abs(resultado_parcial["classe_1"]["iou"] - (1.0 / 3.0)) < EPSILON
-    assert abs(resultado_parcial["classe_1"]["precision"] - 0.5) < EPSILON
-    assert abs(resultado_parcial["classe_1"]["recall"] - 0.5) < EPSILON
+    resultado = calcular_metricas(logits_da_mascara(parcial), mascara_teste)
+    assert abs(resultado["classe_1"]["dice"] - 0.5) < EPSILON
+    assert abs(resultado["classe_1"]["iou"] - 1.0 / 3.0) < EPSILON
+
+    zeros = torch.zeros_like(mascara_teste)
+    vazio = calcular_metricas(logits_da_mascara(zeros), zeros)
+    assert vazio["classe_1"] == {"dice": 1.0, "iou": 1.0, "precision": 0.0, "recall": 0.0}
+
+    try:
+        calcular_metricas(logits_da_mascara(mascara_teste), mascara_teste * 0.5)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("Máscara não binária deveria ser rejeitada.")
 
     print("Testes de métricas concluídos com sucesso.")
