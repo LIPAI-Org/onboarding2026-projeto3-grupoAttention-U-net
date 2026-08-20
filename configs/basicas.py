@@ -3,7 +3,6 @@
 import torch.cuda as cuda
 
 from torch.nn import BCEWithLogitsLoss
-from torch.nn import Dic
 from torch.optim import Adam
 
 from src.losses.dice_loss import DiceLoss
