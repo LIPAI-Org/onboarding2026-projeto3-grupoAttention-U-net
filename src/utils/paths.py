@@ -27,6 +27,11 @@ PATH_SPLITS = os.path.join(
     "splits"
 )
 
+PATH_MASCARAS = os.path.join(
+    PATH_DATA,
+    "mascaras"
+)
+
 PATH_RAW_HE = os.path.join(
     PATH_RAW,
     "HE"
@@ -75,4 +80,14 @@ PATH_SPLIT_TESTE_OEDB = os.path.join(
 PATH_SPLIT_VAL_OEDB = os.path.join(
     PATH_SPLITS_OEDB,
     "val"
+)
+
+PATH_MASC_HE = os.path.join(
+    PATH_MASCARAS,
+    "HE"
+)
+
+PATH_MASC_OEDB = os.path.join(
+    PATH_MASCARAS,
+    "OEDB"
 )
