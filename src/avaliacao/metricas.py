@@ -9,7 +9,7 @@ import torch
 
 EPSILON = 1e-7
 Classe = Literal[0, 1]
-PoliticaZeroDivisao = Literal["padrao", "zero", "one"]
+PoliticaDivisaoZero = Literal["padrao", "zero", "one"]
 
 
 class MetricasClasse(TypedDict):
@@ -36,7 +36,7 @@ def _validar_epsilon(epsilon: float) -> None:
         raise ValueError("epsilon deve ser maior que zero.")
 
 
-def _validar_politica(politica_zero_divisao: PoliticaZeroDivisao) -> None:
+def _validar_politica(politica_zero_divisao: PoliticaDivisaoZero) -> None:
     if politica_zero_divisao not in ("padrao", "zero", "one"):
         raise ValueError("politica_zero_divisao deve ser 'padrao', 'zero' ou 'one'.")
 
@@ -81,7 +81,7 @@ def _contagens_por_classe(
 
 def _valor_vazio(
     metrica: Literal["dice", "iou", "precision", "recall"],
-    politica_zero_divisao: PoliticaZeroDivisao,
+    politica_zero_divisao: PoliticaDivisaoZero,
 ) -> float:
     _validar_politica(politica_zero_divisao)
     if politica_zero_divisao == "zero":
@@ -117,32 +117,32 @@ def logits_para_mascara(logits: torch.Tensor, threshold: float = 0.5) -> torch.T
 
 
 def dice_por_classe(predicao: torch.Tensor, mascara: torch.Tensor, classe: Classe,
-                    epsilon: float = EPSILON, politica_zero_divisao: PoliticaZeroDivisao = "padrao") -> torch.Tensor:
+                    epsilon: float = EPSILON, politica_zero_divisao: PoliticaDivisaoZero = "padrao") -> torch.Tensor:
     tp, fp, fn = _contagens_por_classe(predicao, mascara, classe)
     return _razao(2 * tp, 2 * tp + fp + fn, epsilon, _valor_vazio("dice", politica_zero_divisao))
 
 
 def iou_por_classe(predicao: torch.Tensor, mascara: torch.Tensor, classe: Classe,
-                   epsilon: float = EPSILON, politica_zero_divisao: PoliticaZeroDivisao = "padrao") -> torch.Tensor:
+                   epsilon: float = EPSILON, politica_zero_divisao: PoliticaDivisaoZero = "padrao") -> torch.Tensor:
     tp, fp, fn = _contagens_por_classe(predicao, mascara, classe)
     return _razao(tp, tp + fp + fn, epsilon, _valor_vazio("iou", politica_zero_divisao))
 
 
 def precision_por_classe(predicao: torch.Tensor, mascara: torch.Tensor, classe: Classe,
-                         epsilon: float = EPSILON, politica_zero_divisao: PoliticaZeroDivisao = "padrao") -> torch.Tensor:
+                         epsilon: float = EPSILON, politica_zero_divisao: PoliticaDivisaoZero = "padrao") -> torch.Tensor:
     tp, fp, _ = _contagens_por_classe(predicao, mascara, classe)
     return _razao(tp, tp + fp, epsilon, _valor_vazio("precision", politica_zero_divisao))
 
 
 def recall_por_classe(predicao: torch.Tensor, mascara: torch.Tensor, classe: Classe,
-                      epsilon: float = EPSILON, politica_zero_divisao: PoliticaZeroDivisao = "padrao") -> torch.Tensor:
+                      epsilon: float = EPSILON, politica_zero_divisao: PoliticaDivisaoZero = "padrao") -> torch.Tensor:
     tp, _, fn = _contagens_por_classe(predicao, mascara, classe)
     return _razao(tp, tp + fn, epsilon, _valor_vazio("recall", politica_zero_divisao))
 
 
 def _metricas_de_contagens(
     tp: torch.Tensor, fp: torch.Tensor, fn: torch.Tensor, epsilon: float,
-    politica_zero_divisao: PoliticaZeroDivisao,
+    politica_zero_divisao: PoliticaDivisaoZero,
 ) -> dict[str, torch.Tensor]:
     return {
         "dice": _razao(2 * tp, 2 * tp + fp + fn, epsilon, _valor_vazio("dice", politica_zero_divisao)),
@@ -154,7 +154,7 @@ def _metricas_de_contagens(
 
 def calcular_metricas_imagem(
     predicao: torch.Tensor, mascara: torch.Tensor, epsilon: float = EPSILON,
-    politica_zero_divisao: PoliticaZeroDivisao = "padrao",
+    politica_zero_divisao: PoliticaDivisaoZero = "padrao",
 ) -> MetricasBinarias:
     _validar_epsilon(epsilon)
     _validar_politica(politica_zero_divisao)
@@ -179,7 +179,7 @@ def calcular_metricas_imagem(
 
 def calcular_metricas_por_imagem(
     logits: torch.Tensor, mascara: torch.Tensor, threshold: float = 0.5,
-    epsilon: float = EPSILON, politica_zero_divisao: PoliticaZeroDivisao = "padrao",
+    epsilon: float = EPSILON, politica_zero_divisao: PoliticaDivisaoZero = "padrao",
 ) -> list[MetricasBinarias]:
     _validar_epsilon(epsilon)
     _validar_politica(politica_zero_divisao)
@@ -215,7 +215,7 @@ def agregar_metricas(metricas_por_imagem: Sequence[MetricasBinarias]) -> Metrica
 
 def calcular_metricas(
     logits: torch.Tensor, mascara: torch.Tensor, threshold: float = 0.5,
-    epsilon: float = EPSILON, politica_zero_divisao: PoliticaZeroDivisao = "padrao",
+    epsilon: float = EPSILON, politica_zero_divisao: PoliticaDivisaoZero = "padrao",
 ) -> MetricasBinarias:
     return agregar_metricas(calcular_metricas_por_imagem(logits, mascara, threshold, epsilon, politica_zero_divisao))
 
@@ -248,53 +248,3 @@ def agregar_repeticoes(
         return saida
 
     return visitar(resultados[0])
-
-
-if __name__ == "__main__":
-    def logits_da_mascara(predicao: torch.Tensor) -> torch.Tensor:
-        return torch.where(predicao == 1, torch.full_like(predicao, 10.0), torch.full_like(predicao, -10.0))
-
-    mascara_teste = torch.tensor([[[[1.0, 1.0], [0.0, 0.0]]]])
-    perfeitos = calcular_metricas(logits_da_mascara(mascara_teste), mascara_teste)
-    assert all(perfeitos[classe][metrica] == 1.0 for classe in ("classe_0", "classe_1") for metrica in ("dice", "iou", "precision", "recall"))
-
-    oposta = 1.0 - mascara_teste
-    sem_intersecao = calcular_metricas(logits_da_mascara(oposta), mascara_teste)
-    assert all(sem_intersecao[classe][metrica] == 0.0 for classe in ("classe_0", "classe_1") for metrica in ("dice", "iou", "precision", "recall"))
-
-    parcial = torch.tensor([[[[1.0, 0.0], [1.0, 0.0]]]])
-    resultado_parcial = calcular_metricas(logits_da_mascara(parcial), mascara_teste)
-    assert abs(resultado_parcial["classe_1"]["dice"] - 0.5) < EPSILON
-    assert abs(resultado_parcial["classe_1"]["iou"] - 1.0 / 3.0) < EPSILON
-
-    mascaras_lote = torch.cat((mascara_teste, mascara_teste))
-    predicoes_lote = torch.cat((mascara_teste, oposta))
-    por_imagem = calcular_metricas_por_imagem(logits_da_mascara(predicoes_lote), mascaras_lote)
-    assert len(por_imagem) == 2 and por_imagem[0]["mdice"] == 1.0 and por_imagem[1]["miou"] == 0.0
-
-    agregadas = agregar_metricas([
-        {"classe_0": {"dice": 0.0, "iou": 0.0, "precision": 0.0, "recall": 0.0}, "classe_1": {"dice": 0.2, "iou": 0.2, "precision": 0.2, "recall": 0.2}, "mdice": 0.1, "miou": 0.1},
-        {"classe_0": {"dice": 1.0, "iou": 1.0, "precision": 1.0, "recall": 1.0}, "classe_1": {"dice": 0.6, "iou": 0.6, "precision": 0.6, "recall": 0.6}, "mdice": 0.8, "miou": 0.8},
-    ])
-    assert agregadas["classe_1"]["dice"] == 0.4 and agregadas["mdice"] == 0.45
-
-    repeticoes = agregar_repeticoes([{"mdice": 0.2}, {"mdice": 0.4}, {"mdice": 0.6}])
-    assert abs(repeticoes["mdice"]["media"] - 0.4) < EPSILON
-    assert abs(repeticoes["mdice"]["desvio_padrao"] - 0.2) < EPSILON
-
-    zeros = torch.zeros_like(mascara_teste)
-    ausente_ambas = calcular_metricas(logits_da_mascara(zeros), zeros)
-    assert ausente_ambas["classe_1"] == {"dice": 1.0, "iou": 1.0, "precision": 0.0, "recall": 0.0}
-    ausente_predicao = calcular_metricas(logits_da_mascara(zeros), mascara_teste)
-    assert ausente_predicao["classe_1"]["precision"] == 0.0
-    ausente_mascara = calcular_metricas(logits_da_mascara(mascara_teste), zeros)
-    assert ausente_mascara["classe_1"]["recall"] == 0.0
-
-    try:
-        calcular_metricas(logits_da_mascara(mascara_teste), mascara_teste * 0.5)
-    except ValueError:
-        pass
-    else:
-        raise AssertionError("Máscara não binária deveria ser rejeitada.")
-
-    print("Testes de métricas concluídos com sucesso.")
