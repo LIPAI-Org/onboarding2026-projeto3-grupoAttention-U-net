@@ -5,6 +5,7 @@ import torch
 from src.utils.paths import PATH_MODELOS, PATH_MELHOR_ATUNET, PATH_MELHOR_UNET
 from src.modelos.unet import UNetClassica
 from src.modelos.attention_unet import AttentionUNet
+from configs.basicas import DEVICE
 
 def salvar_checkpoint(modelo, mdice, nome_arquivo):
     os.makedirs(PATH_MODELOS, exist_ok=True)
@@ -24,8 +25,8 @@ def salvar_checkpoint(modelo, mdice, nome_arquivo):
             if mdice > melhor_checkpoint['mdice']:
                 torch.save(checkpoint, caminho_melhor)
 
-def carregar_checkpoint(modelo, nome_arquivo, device='cpu'):
+def carregar_checkpoint(modelo, nome_arquivo):
     caminho = os.path.join(PATH_MODELOS, f"{nome_arquivo}.pt")
-    checkpoint = torch.load(caminho, map_location=device)
+    checkpoint = torch.load(caminho, map_location=DEVICE)
     modelo.load_state_dict(checkpoint['state_dict'])
     return modelo, checkpoint['mdice']

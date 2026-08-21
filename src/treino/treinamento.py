@@ -17,7 +17,7 @@ from configs.basicas import (
     GAMMA,
     TAXA_APRENDIZADO,
 )
-from src.utils.checkpoints import salvar_checkpoint
+from src.utils.checkpoints import salvar_checkpoint, carregar_checkpoint
 from src.treino.validacao import validar
 from src.utils.seed import fixar_seed
 import curvas_treino
@@ -119,5 +119,7 @@ def treinar_modelo(
 
     curvas_treino.plotar_losses(nome, historico_loss_treino, historico_loss_val)
     curvas_treino.plotar_mdice_val(nome, historico_mdice_val)
+
+    modelo, _ = carregar_checkpoint(modelo, nome)
 
     return modelo, melhor_mdice_atual, historico
