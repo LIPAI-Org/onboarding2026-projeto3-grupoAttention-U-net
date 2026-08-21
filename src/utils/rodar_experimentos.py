@@ -3,21 +3,23 @@
 from configs.basicas import DEVICE
 from src.utils.experimentos import Experimento
 from src.modelos.modelo_factory import pegar_modelo
+from src.losses.loss_factory import pegar_f_loss
 from src.data.dataloader import criar_dataloaders
 from src.treino.treinamento import treinar_modelo
 from src.avaliacao.avaliador import avaliar_modelo
+from src.utils.tabela_resultado import adicionar_resultado
 
 def rodar_um_experimento(experimento: Experimento):
-    nome_modelo = experimento.get_modelo()
+    nome_modelo = experimento.get_modelo().upper()
     dataset = experimento.get_dataset()
     aumento = experimento.get_aumento()
-    f_loss = experimento.get_f_loss()
+    nome_f_loss = experimento.get_f_loss().upper()
     seed = experimento.get_seed()
-    modo_treinamento = 'FS' if nome_modelo.upper() in ("UNETFS", "ATUNET") else 'PTALL'
-    nome = f'{nome_modelo}_{dataset}_{f_loss}_{aumento}_{seed}'
+    nome = f'{nome_modelo}_{dataset}_{nome_f_loss}_{aumento}_{seed}'
 
     modelo = pegar_modelo(nome_modelo)
     modelo.to(DEVICE)
+    f_loss = pegar_f_loss(nome_f_loss)
     dl_treino, dl_val, dl_teste = criar_dataloaders(
         nome_dataset=dataset,
         num_workers=0,
@@ -36,3 +38,27 @@ def rodar_um_experimento(experimento: Experimento):
         modelo=modelo,
         dataloader_teste=dl_teste
     )
+
+    nome_arquitetura = "U-Net" if nome_modelo in ("UNETFS", "UNETPTALL") else "Attention U-Net"
+    modo_treinamento = 'FS' if nome_modelo in ("UNETFS", "ATUNET") else 'PTALL'
+    try:
+        adicionar_resultado(
+            arquitetura=nome_arquitetura,
+            dataset=dataset,
+            modo_treinamento=modo_treinamento,
+            loss=nome_f_loss,
+            augmentation=str(aumento),
+            seed=seed,
+            mdice=metricas_teste["mdice"],
+            miou=metricas_teste["miou"],
+            dice_classe_1=metricas_teste["classe_1"]["dice"],
+            iou_classe_1=metricas_teste["classe_1"]["iou"],
+            precision_classe_1=metricas_teste["classe_1"]["precision"],
+            recall_classe_1=metricas_teste["classe_1"]["recall"]
+        )
+    except ValueError as e:
+        print(f"Aviso: Resultado não salvo pois {e}")
+
+def rodar_todos_experimentos(experimentos):
+    for experimento in experimentos:
+        rodar_um_experimento(experimento)

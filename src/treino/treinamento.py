@@ -20,7 +20,7 @@ from configs.basicas import (
 from src.utils.checkpoints import salvar_checkpoint, carregar_checkpoint
 from src.treino.validacao import validar
 from src.utils.seed import fixar_seed
-import curvas_treino
+import src.treino.curvas_treino as curvas_treino
 
 def treinar_uma_epoca(
     nome: str,

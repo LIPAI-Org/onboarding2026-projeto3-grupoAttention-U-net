@@ -30,7 +30,6 @@ def experimentos_factory():
     lista_experimentos = []
     
     for combinacao in COMBINACOES:
-        # O asterisco (*) desempacota a tupla diretamente nos argumentos do construtor
         experimento = Experimento(*combinacao)
         lista_experimentos.append(experimento)
         

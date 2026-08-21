@@ -64,7 +64,7 @@ class HistologiaDataset(Dataset):
         imagem_tensor = dados_transformados["image"]
         mascara_tensor = dados_transformados["mask"]
 
-        mascara_tensor = mascara_tensor.float() / 255.0
+        mascara_tensor = (mascara_tensor > 0).float()
         mascara_tensor = mascara_tensor.unsqueeze(0)
 
         return imagem_tensor, mascara_tensor

@@ -23,8 +23,8 @@ def obter_transformacoes(aplicar_aug: bool) -> A.Compose:
         ])
 
     passos.extend([
-        A.Normalize(mean=NORMALIZACAO_MEAN, std=NORMALIZACAO_STD, always_apply=True),
-        ToTensorV2(always_apply=True)
+        A.Normalize(mean=NORMALIZACAO_MEAN, std=NORMALIZACAO_STD),
+        ToTensorV2()
     ])
 
     return A.Compose(passos)
