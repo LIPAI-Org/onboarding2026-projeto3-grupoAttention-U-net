@@ -111,7 +111,7 @@ def adicionar_resultado(
         "precision_classe_1": _validar_metrica("precision_classe_1", precision_classe_1),
         "recall_classe_1": _validar_metrica("recall_classe_1", recall_classe_1),
     }
-    caminho = PATH_TABELA_COMPLETA
+    caminho = Path(PATH_TABELA_COMPLETA)
     linhas = _ler_csv(caminho, COLUNAS_EXECUCOES)
     chave = tuple(str(linha[coluna]) for coluna in (*COLUNAS_CONFIGURACAO, "seed"))
 

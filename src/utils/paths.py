@@ -115,12 +115,12 @@ PATH_PLOTS = os.path.join(
 
 PATH_TABELA_COMPLETA = os.path.join(
     PATH_METRICAS,
-    "resultados_execucoes"
+    "resultados_execucoes.csv"
 )
 
 PATH_TABELA_CONSOLIDADA = os.path.join(
     PATH_METRICAS,
-    "resultados_consolidados"
+    "resultados_consolidados.csv"
 )
 
 PATH_MELHOR_ATUNET = os.path.join(

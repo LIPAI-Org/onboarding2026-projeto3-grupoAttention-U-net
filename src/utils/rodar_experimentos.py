@@ -25,7 +25,7 @@ def rodar_um_experimento(experimento: Experimento):
         num_workers=0,
         aplicar_aug=aumento
     )
-    modelo, melhor_mdice_val = treinar_modelo(
+    modelo, _, _ = treinar_modelo(
         nome=nome,
         modelo=modelo,
         dataloader_treino=dl_treino,
@@ -33,6 +33,8 @@ def rodar_um_experimento(experimento: Experimento):
         f_loss=f_loss,
         seed=seed
     )
+
+    modelo.to(DEVICE)
 
     metricas_teste = avaliar_modelo(
         modelo=modelo,

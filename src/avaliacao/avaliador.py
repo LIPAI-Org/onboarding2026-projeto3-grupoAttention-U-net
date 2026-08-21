@@ -28,7 +28,7 @@ def _validar_entrada(
 
     device_torch = torch.device(DEVICE)
     primeiro_parametro = next(modelo.parameters(), None)
-    if primeiro_parametro is not None and primeiro_parametro.device != device_torch:
+    if primeiro_parametro is not None and primeiro_parametro.device.type != device_torch.type:
         raise ValueError("device deve ser o mesmo device dos parâmetros do modelo.")
     return device_torch
 
@@ -56,7 +56,7 @@ def avaliar_modelo(
     modelo: nn.Module,
     dataloader_teste: DataLoader,
 ) -> MetricasBinarias:
-    device_torch = _validar_entrada(modelo, dataloader_teste, DEVICE, LIMIAR)
+    device_torch = _validar_entrada(modelo, dataloader_teste)
     modelo.eval()
     metricas_por_imagem: list[MetricasBinarias] = []
 
