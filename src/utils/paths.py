@@ -98,6 +98,11 @@ PATH_RESULTS = os.path.join(
     "results"
 )
 
+PATH_METRICAS = os.path.join(
+    PATH_RESULTS,
+    "metrics"
+)
+
 PATH_MODELOS = os.path.join(
     PATH_RESULTS,
     "modelos"
@@ -106,6 +111,26 @@ PATH_MODELOS = os.path.join(
 PATH_PLOTS = os.path.join(
     PATH_RESULTS,
     "plots"
+)
+
+PATH_TABELA_COMPLETA = os.path.join(
+    PATH_METRICAS,
+    "resultados_execucoes"
+)
+
+PATH_TABELA_CONSOLIDADA = os.path.join(
+    PATH_METRICAS,
+    "resultados_consolidados"
+)
+
+PATH_MELHOR_ATUNET = os.path.join(
+    PATH_MODELOS,
+    "melhor_atunet.pt"
+)
+
+PATH_MELHOR_UNET = os.path.join(
+    PATH_MODELOS,
+    "melhor_unet.pt"
 )
 
 PATH_PLOTS_CURVAS_APRENDIZADO = os.path.join(
@@ -121,14 +146,4 @@ PATH_PLOTS_CURVAS_APRENDIZADO_LOSS = os.path.join(
 PATH_PLOTS_CURVAS_APRENDIZADO_MDICE = os.path.join(
     PATH_PLOTS_CURVAS_APRENDIZADO,
     "mdice"
-)
-
-PATH_MELHOR_ATUNET = os.path.join(
-    PATH_MODELOS,
-    "melhor_atunet.pt"
-)
-
-PATH_MELHOR_UNET = os.path.join(
-    PATH_MODELOS,
-    "melhor_unet.pt"
 )

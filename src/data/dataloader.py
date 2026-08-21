@@ -12,10 +12,10 @@ from src.utils.paths import (
     PATH_MASC_HE, PATH_MASC_OEDB
 )
 from src.data.dataset import HistologiaDataset
+from configs.basicas import TAM_BATCH
 
 def criar_dataloaders(
     nome_dataset: str, 
-    batch_size: int, 
     num_workers: int, 
     aplicar_aug: bool = False
 ) -> Tuple[DataLoader, DataLoader, DataLoader]:
@@ -60,7 +60,7 @@ def criar_dataloaders(
 
     dl_treino = DataLoader(
         dataset_treino, 
-        batch_size=batch_size, 
+        batch_size=TAM_BATCH, 
         shuffle=True, 
         num_workers=num_workers, 
         drop_last=True
@@ -68,7 +68,7 @@ def criar_dataloaders(
     
     dl_val = DataLoader(
         dataset_val, 
-        batch_size=batch_size, 
+        batch_size=TAM_BATCH, 
         shuffle=False, 
         num_workers=num_workers, 
         drop_last=False
@@ -76,7 +76,7 @@ def criar_dataloaders(
     
     dl_teste = DataLoader(
         dataset_teste, 
-        batch_size=batch_size, 
+        batch_size=TAM_BATCH, 
         shuffle=False, 
         num_workers=num_workers, 
         drop_last=False
