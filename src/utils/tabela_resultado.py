@@ -97,7 +97,6 @@ def adicionar_resultado(
     precision_classe_1: float,
     recall_classe_1: float,
 ) -> None:
-    """ Retorna ValueError caso já tenha executado antes, tratar! """
     linha: dict[str, Any] = {
         "arquitetura": _validar_texto("arquitetura", arquitetura),
         "dataset": _validar_texto("dataset", dataset),
@@ -126,7 +125,6 @@ def adicionar_resultado(
 
 
 def consolidar_resultados() -> None:
-    """ Retorna ValueError se uma seed encontrada for diferente das esperadas """
     linhas = _ler_csv(PATH_TABELA_COMPLETA, COLUNAS_EXECUCOES)
     grupos: dict[tuple[str, ...], list[dict[str, str]]] = {}
     for linha in linhas:

@@ -17,7 +17,6 @@ def _validar_entrada(
     modelo: nn.Module,
     dataloader_teste: DataLoader,
 ) -> torch.device:
-    """Valida os argumentos da avaliação e retorna o device normalizado."""
     if not isinstance(modelo, nn.Module):
         raise TypeError("modelo deve ser uma instância de torch.nn.Module.")
     if isinstance(LIMIAR, bool) or not isinstance(LIMIAR, numbers.Real):
@@ -35,7 +34,6 @@ def _validar_entrada(
 
 
 def _validar_batch(batch: Any) -> tuple[torch.Tensor, torch.Tensor]:
-    """Garante que o batch segue o contrato imagem/máscara do DataLoader."""
     if not isinstance(batch, (tuple, list)) or len(batch) != 2:
         raise ValueError("Cada batch deve conter exatamente (imagens, mascaras).")
 
@@ -58,11 +56,6 @@ def avaliar_modelo(
     modelo: nn.Module,
     dataloader_teste: DataLoader,
 ) -> MetricasBinarias:
-    """Avalia um modelo já selecionado no teste e retorna métricas médias por imagem.
-
-    Não seleciona épocas, modelos ou hiperparâmetros. As fórmulas e a
-    agregação das métricas são inteiramente delegadas a ``metricas.py``.
-    """
     device_torch = _validar_entrada(modelo, dataloader_teste, DEVICE, LIMIAR)
     modelo.eval()
     metricas_por_imagem: list[MetricasBinarias] = []
@@ -91,7 +84,6 @@ def avaliar_modelo(
 
 # Script de teste
 # def executar_testes_basicos() -> None:
-#     """Verifica o fluxo com modelos e tensores artificiais, sem dados reais."""
 #     from torch.utils.data import TensorDataset
 
 #     class ModeloPerfeito(nn.Module):
