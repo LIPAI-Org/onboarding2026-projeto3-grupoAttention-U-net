@@ -72,6 +72,7 @@ def treinar_modelo(
     scheduler = REDUTOR_LR(otimizador, step_size=TAM_STEP, gamma=GAMMA)
 
     melhor_mdice_atual = 0.0
+    melhor_epoca = 0
     historico_loss_treino: List[float] = []
     historico_loss_val: List[float] = []
     historico_mdice_val: List[float] = []
@@ -92,6 +93,7 @@ def treinar_modelo(
 
         if mdice_val > melhor_mdice_atual:
             melhor_mdice_atual = mdice_val
+            melhor_epoca = epoca
 
         scheduler.step()
 
@@ -122,4 +124,4 @@ def treinar_modelo(
 
     modelo, _ = carregar_checkpoint(modelo, nome)
 
-    return modelo, melhor_mdice_atual, historico
+    return modelo, melhor_mdice_atual, melhor_epoca, historico

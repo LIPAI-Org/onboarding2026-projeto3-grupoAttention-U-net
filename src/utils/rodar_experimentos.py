@@ -7,7 +7,7 @@ from src.losses.loss_factory import pegar_f_loss
 from src.data.dataloader import criar_dataloaders
 from src.treino.treinamento import treinar_modelo
 from src.avaliacao.avaliador import avaliar_modelo
-from src.utils.tabela_resultado import adicionar_resultado
+from src.utils.tabela_resultado import adicionar_resultado, adicionar_resultado_completo
 
 def rodar_um_experimento(experimento: Experimento):
     nome_modelo = experimento.get_modelo().upper()
@@ -25,7 +25,7 @@ def rodar_um_experimento(experimento: Experimento):
         num_workers=0,
         aplicar_aug=aumento
     )
-    modelo, _, _ = treinar_modelo(
+    modelo, melhor_mdice_val, melhor_epoca, _ = treinar_modelo(
         nome=nome,
         modelo=modelo,
         dataloader_treino=dl_treino,
@@ -60,6 +60,25 @@ def rodar_um_experimento(experimento: Experimento):
         )
     except ValueError as e:
         print(f"Aviso: Resultado não salvo pois {e}")
+
+    adicionar_resultado_completo(
+        modelo=modelo,
+        dataset=dataset,
+        modo_treinamento=modo_treinamento,
+        loss=nome_f_loss,
+        augmentation=str(aumento),
+        seed=seed,
+        dice_background_test=metricas_teste["classe_0"]["dice"],
+        dice_foreground_test=metricas_teste["classe_1"]["dice"],
+        mDice_test=metricas_teste["mdice"],
+        iou_background_test=metricas_teste["classe_0"]["iou"],
+        iou_foreground_test=metricas_teste["classe_1"]["iou"],
+        mIoU_test=metricas_teste["miou"],
+        precision_foreground_test=metricas_teste["classe_1"]["precision"],
+        recall_foreground_test=metricas_teste["classe_1"]["recall"],
+        best_epoch=melhor_epoca,
+        val_mDice_best=melhor_mdice_val
+    )
 
 def rodar_todos_experimentos(experimentos):
     for experimento in experimentos:

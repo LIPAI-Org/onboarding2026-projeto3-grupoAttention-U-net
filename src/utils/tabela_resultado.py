@@ -10,10 +10,19 @@ from pathlib import Path
 from statistics import mean, stdev
 from typing import Any, Iterable, Mapping
 
+import torch.nn as nn
+
 from src.utils.paths import (
     PATH_TABELA_COMPLETA,
-    PATH_TABELA_CONSOLIDADA
+    PATH_TABELA_CONSOLIDADA,
+    PATH_TABELA_COMPLETA
 )
+from configs.basicas import (
+    TAM_PATCH,
+    TAM_BATCH,
+    NUM_EPOCAS
+)
+from src.utils.graficos_globais import calcular_numero_parametros, calcular_gflops
 
 COLUNAS_EXECUCOES = (
     "arquitetura",
@@ -28,6 +37,15 @@ COLUNAS_EXECUCOES = (
     "iou_classe_1",
     "precision_classe_1",
     "recall_classe_1",
+)
+
+COLUNAS_PLANILHA = (
+    "repetition", "seed", "dataset", "task", "model", "encoder",
+    "training mode", "augmentation", "loss", "input_size", "epochs",
+    "batch_size", "dice_background_test", "dice_foreground_test",
+    "mDice_test", "iou_background_test", "iou_foreground_test",
+    "mIoU_test", "precision_foreground_test", "recall_foreground_test",
+    "num_params", "trainable_params", "gflops", "best_epoch", "val_mDice_best"
 )
 
 COLUNAS_CONFIGURACAO = COLUNAS_EXECUCOES[:5]
@@ -149,45 +167,80 @@ def consolidar_resultados() -> None:
     consolidados.sort(key=lambda linha: tuple(str(linha[coluna]) for coluna in COLUNAS_CONFIGURACAO))
     _escrever_csv(PATH_TABELA_CONSOLIDADA, COLUNAS_CONSOLIDADOS, consolidados)
 
-# Script de teste
-# def executar_testes_basicos() -> None:
-#     with tempfile.TemporaryDirectory() as diretorio_temporario:
-#         diretorio = Path(diretorio_temporario)
-#         execucoes = diretorio / "execucoes.csv"
-#         consolidados = diretorio / "consolidados.csv"
-#         base = {
-#             "arquitetura": "Attention U-Net",
-#             "dataset": "OEDB",
-#             "modo_treinamento": "do zero",
-#             "loss": "BCE",
-#             "augmentation": "sim",
-#         }
-#         for seed, mdice, miou, dice, iou, precision, recall in (
-#             (42, 0.80, 0.70, 0.79, 0.65, 0.82, 0.77),
-#             (123, 0.82, 0.72, 0.81, 0.67, 0.84, 0.79),
-#             (2025, 0.84, 0.74, 0.83, 0.69, 0.86, 0.81),
-#         ):
-#             adicionar_resultado(
-#                 **base, seed=seed, mdice=mdice, miou=miou, dice_classe_1=dice,
-#                 iou_classe_1=iou, precision_classe_1=precision, recall_classe_1=recall,
-#                 caminho_execucoes=execucoes,
-#             )
+def adicionar_resultado_completo(
+    *,
+    modelo: nn.Module,
+    dataset: str,
+    modo_treinamento: str,
+    loss: str,
+    augmentation: str,
+    seed: int,
+    dice_background_test: float,
+    dice_foreground_test: float,
+    mDice_test: float,
+    iou_background_test: float,
+    iou_foreground_test: float,
+    mIoU_test: float,
+    precision_foreground_test: float,
+    recall_foreground_test: float,
+    best_epoch: int,
+    val_mDice_best: float,
+    task: str = "segmentacao_binaria"
+) -> None:
+    nome_modelo = modelo.__class__.__name__
+    if nome_modelo == "UNetClassica":
+        encoder = "resnet34"
+    elif nome_modelo == "AttentionUNet":
+        encoder = "custom_from_scratch"
+    else:
+        encoder = "desconhecido"
 
-#         try:
-#             adicionar_resultado(
-#                 **base, seed=42, mdice=0.80, miou=0.70, dice_classe_1=0.79,
-#                 iou_classe_1=0.65, precision_classe_1=0.82, recall_classe_1=0.77,
-#                 caminho_execucoes=execucoes,
-#             )
-#         except ValueError:
-#             pass
-#         else:
-#             raise AssertionError("A duplicação deveria ter sido impedida.")
+    trainable_params = calcular_numero_parametros(modelo)
+    num_params = sum(p.numel() for p in modelo.parameters())
+    
+    tamanho_entrada = (1, 3, TAM_PATCH, TAM_PATCH)
+    gflops = calcular_gflops(modelo, tamanho_entrada=tamanho_entrada)
 
-#         consolidar_resultados(caminho_execucoes=execucoes, caminho_consolidados=consolidados)
-#         resultado = _ler_csv(consolidados, COLUNAS_CONSOLIDADOS)
-#         assert len(resultado) == 1
-#         assert "seed" not in resultado[0]
-#         assert "iou_classe_1_media" in resultado[0]
-#         assert math.isclose(float(resultado[0]["mdice_media"]), 0.82)
-#         assert math.isclose(float(resultado[0]["mdice_std"]), 0.02)
+    caminho = Path(PATH_TABELA_COMPLETA)
+    linhas = _ler_csv(caminho, COLUNAS_PLANILHA) if caminho.exists() else []
+
+    chave_busca = (str(seed), dataset, nome_modelo, modo_treinamento, augmentation, loss)
+    repetition = 1
+    for linha in linhas:
+        chave_linha = (
+            linha["seed"], linha["dataset"], linha["model"], 
+            linha["training mode"], linha["augmentation"], linha["loss"]
+        )
+        if chave_linha == chave_busca:
+            repetition += 1
+
+    nova_linha: dict[str, Any] = {
+        "repetition": repetition,
+        "seed": _validar_seed(seed),
+        "dataset": _validar_texto("dataset", dataset),
+        "task": _validar_texto("task", task),
+        "model": nome_modelo,
+        "encoder": encoder,
+        "training mode": _validar_texto("modo_treinamento", modo_treinamento),
+        "augmentation": _validar_texto("augmentation", augmentation),
+        "loss": _validar_texto("loss", loss),
+        "input_size": f"{TAM_PATCH}x{TAM_PATCH}",
+        "epochs": int(NUM_EPOCAS),
+        "batch_size": int(TAM_BATCH),
+        "dice_background_test": _validar_metrica("dice_background_test", dice_background_test),
+        "dice_foreground_test": _validar_metrica("dice_foreground_test", dice_foreground_test),
+        "mDice_test": _validar_metrica("mDice_test", mDice_test),
+        "iou_background_test": _validar_metrica("iou_background_test", iou_background_test),
+        "iou_foreground_test": _validar_metrica("iou_foreground_test", iou_foreground_test),
+        "mIoU_test": _validar_metrica("mIoU_test", mIoU_test),
+        "precision_foreground_test": _validar_metrica("precision_foreground_test", precision_foreground_test),
+        "recall_foreground_test": _validar_metrica("recall_foreground_test", recall_foreground_test),
+        "num_params": num_params,
+        "trainable_params": trainable_params,
+        "gflops": round(float(gflops), 4),
+        "best_epoch": int(best_epoch),
+        "val_mDice_best": _validar_metrica("val_mDice_best", val_mDice_best),
+    }
+
+    linhas.append(nova_linha)
+    _escrever_csv(caminho, COLUNAS_PLANILHA, linhas)

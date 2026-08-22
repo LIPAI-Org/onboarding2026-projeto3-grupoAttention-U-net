@@ -123,6 +123,11 @@ PATH_TABELA_CONSOLIDADA = os.path.join(
     "resultados_consolidados.csv"
 )
 
+PATH_TABELA_COMPLETA = os.path.join(
+    PATH_METRICAS,
+    "resultados_completos.csv"
+)
+
 PATH_MELHOR_ATUNET = os.path.join(
     PATH_MODELOS,
     "melhor_atunet.pt"
