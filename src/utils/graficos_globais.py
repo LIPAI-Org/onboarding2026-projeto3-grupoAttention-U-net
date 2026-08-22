@@ -296,5 +296,12 @@ def executar_testes_basicos() -> None:
 
 
 if __name__ == "__main__":
-    executar_testes_basicos()
-    print("Testes básicos concluídos com sucesso.")
+    print("Gerando gráficos globais...")
+
+    arquivos = gerar_graficos_globais()
+
+    for metrica, datasets in arquivos.items():
+        for dataset, caminho in datasets.items():
+            print(f"{metrica} - {dataset}: {caminho}")
+
+    print("Gráficos globais gerados com sucesso.")
