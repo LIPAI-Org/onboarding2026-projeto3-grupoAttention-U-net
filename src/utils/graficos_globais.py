@@ -293,15 +293,3 @@ def executar_testes_basicos() -> None:
             pass
         else:
             raise AssertionError("O tamanho de entrada inválido deveria gerar ValueError.")
-
-
-if __name__ == "__main__":
-    print("Gerando gráficos globais...")
-
-    arquivos = gerar_graficos_globais()
-
-    for metrica, datasets in arquivos.items():
-        for dataset, caminho in datasets.items():
-            print(f"{metrica} - {dataset}: {caminho}")
-
-    print("Gráficos globais gerados com sucesso.")
