@@ -15,7 +15,6 @@ import shutil
 import random
 
 from pathlib import Path
-from src.utils.graficos_globais import gerar_graficos_globais
 
 raiz_projeto = Path(__file__).resolve().parent.parent
 sys.path.append(str(raiz_projeto))
@@ -55,13 +54,3 @@ def dividir_dataset(origem, extensao, destino_treino, destino_teste, destino_val
 
 dividir_dataset(PATH_RAW_HE, ".png", PATH_SPLIT_TREINO_HE, PATH_SPLIT_TESTE_HE, PATH_SPLIT_VAL_HE)
 dividir_dataset(PATH_RAW_OEDB, ".tif", PATH_SPLIT_TREINO_OEDB, PATH_SPLIT_TESTE_OEDB, PATH_SPLIT_VAL_OEDB)
-
-print("Gerando gráficos globais...")
-
-arquivos = gerar_graficos_globais()
-
-for metrica, datasets in arquivos.items():
-    for dataset, caminho in datasets.items():
-        print(f"{metrica} - {dataset}: {caminho}")
-
-print("Gráficos globais gerados com sucesso.")

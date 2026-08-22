@@ -147,3 +147,23 @@ PATH_PLOTS_CURVAS_APRENDIZADO_MDICE = os.path.join(
     PATH_PLOTS_CURVAS_APRENDIZADO,
     "mdice"
 )
+
+PATH_PLOTS_GRAFICOS_GLOBAIS = os.path.join(
+    PATH_PLOTS,
+    "graficos_globais"
+)
+
+PATH_GRAFICOS_GLOBAIS_MDICE = os.path.join(
+    PATH_PLOTS_GRAFICOS_GLOBAIS,
+    "mdice"
+)
+
+PATH_GRAFICOS_GLOBAIS_MIOU = os.path.join(
+    PATH_PLOTS_GRAFICOS_GLOBAIS,
+    "miou"
+)
+
+PATH_GRAFICOS_GLOBAIS_GFLOPS_PARAMETROS = os.path.join(
+    PATH_PLOTS_GRAFICOS_GLOBAIS,
+    "gflops_e_parametros"
+)

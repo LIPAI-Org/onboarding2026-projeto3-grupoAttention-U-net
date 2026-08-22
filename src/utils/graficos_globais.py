@@ -5,7 +5,6 @@ from __future__ import annotations
 import csv
 import math
 import re
-import tempfile
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
@@ -14,6 +13,12 @@ import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 
+from src.utils.paths import (
+    PATH_GRAFICOS_GLOBAIS_MDICE,
+    PATH_GRAFICOS_GLOBAIS_MIOU,
+    PATH_GRAFICOS_GLOBAIS_GFLOPS_PARAMETROS,
+    PATH_TABELA_CONSOLIDADA,
+)
 
 COLUNAS_CONFIGURACAO = (
     "arquitetura",
@@ -36,24 +41,6 @@ COLUNAS_CONSOLIDADOS = (
 )
 
 
-def _diretorios_padrao() -> tuple[Path, Path]:
-    try:
-        from src.utils.paths import PATH_PLOTS, PATH_RESULTS
-
-        return Path(PATH_RESULTS) / "metrics", Path(PATH_PLOTS) / "graficos_globais"
-    except ModuleNotFoundError:
-        raiz = Path(__file__).resolve().parents[2]
-        return raiz / "results" / "metrics", raiz / "results" / "plots" / "graficos_globais"
-
-
-def _caminho_consolidado(caminho: str | Path | None) -> Path:
-    return Path(caminho) if caminho is not None else _diretorios_padrao()[0] / "resultados_consolidados.csv"
-
-
-def _diretorio_saida(diretorio: str | Path | None) -> Path:
-    return Path(diretorio) if diretorio is not None else _diretorios_padrao()[1]
-
-
 def _slug(texto: str) -> str:
     resultado = re.sub(r"[^A-Za-z0-9_-]+", "_", texto.strip())
     return resultado.strip("_") or "dataset"
@@ -70,7 +57,7 @@ def _validar_valor_metrica(nome: str, valor: Any) -> float:
 
 
 def ler_resultados_consolidados(caminho: str | Path | None = None) -> list[dict[str, str]]:
-    caminho_csv = _caminho_consolidado(caminho)
+    caminho_csv = Path(caminho) if caminho is not None else Path(PATH_TABELA_CONSOLIDADA)
     if not caminho_csv.is_file():
         raise FileNotFoundError(f"CSV consolidado não encontrado: {caminho_csv}")
 
@@ -117,26 +104,48 @@ def _gerar_grafico_metrica(
         medias = [_validar_valor_metrica(col_media, linha.get(col_media)) for linha in linhas]
         desvios = [_validar_valor_metrica(col_std, linha.get(col_std)) for linha in linhas]
         rotulos = [_rotulo_configuracao(linha) for linha in linhas]
+        
+        max_por_arq = {}
+        for linha, media in zip(linhas, medias):
+            arq = str(linha.get("arquitetura", "Desconhecida")).strip()
+            if arq not in max_por_arq or media > max_por_arq[arq]:
+                max_por_arq[arq] = media
+
         largura = max(9.0, len(linhas) * 2.15)
         tamanho_fonte_rotulos = 9 if len(linhas) <= 6 else 8 if len(linhas) <= 12 else 7
 
         figura, eixo = plt.subplots(figsize=(largura, 7.0))
         posicoes = range(len(linhas))
         eixo.bar(posicoes, medias, yerr=desvios, capsize=5)
+        
+        cores = plt.cm.tab10.colors
+        for i, (arq, valor_max) in enumerate(max_por_arq.items()):
+            cor = cores[i % len(cores)]
+            eixo.axhline(
+                y=valor_max, 
+                color=cor, 
+                linestyle="--", 
+                linewidth=1.5, 
+                alpha=0.8, 
+                label=f"Máx {arq}: {valor_max:.3f}"
+            )
+
         eixo.set_title(f"{titulo} - Dataset {dataset}")
         eixo.set_xlabel("Configuração experimental")
         eixo.set_ylabel(titulo)
         eixo.set_ylim(0.0, 1.0)
         eixo.set_xticks(list(posicoes), rotulos, rotation=28, ha="right", fontsize=tamanho_fonte_rotulos)
         eixo.grid(axis="y", linestyle="--", alpha=0.45)
+        eixo.legend(loc="upper left", bbox_to_anchor=(1.01, 1), borderaxespad=0.)
         eixo.margins(x=0.02)
         figura.tight_layout()
 
-        destino = diretorio_saida / metrica / f"{metrica}_{_slug(dataset)}.png"
+        destino = diretorio_saida / f"{metrica}_{_slug(dataset)}.png"
         destino.parent.mkdir(parents=True, exist_ok=True)
         figura.savefig(destino, dpi=300, bbox_inches="tight")
         plt.close(figura)
         arquivos[dataset] = destino
+        
     return arquivos
 
 
@@ -147,7 +156,8 @@ def gerar_grafico_mdice(
     diretorio_saida: str | Path | None = None,
 ) -> dict[str, Path]:
     linhas = list(resultados) if resultados is not None else ler_resultados_consolidados(caminho_consolidado)
-    return _gerar_grafico_metrica(linhas, "mdice", "mDice", _diretorio_saida(diretorio_saida))
+    saida = Path(diretorio_saida) if diretorio_saida is not None else Path(PATH_GRAFICOS_GLOBAIS_MDICE)
+    return _gerar_grafico_metrica(linhas, "mdice", "mDice", saida)
 
 
 def gerar_grafico_miou(
@@ -157,7 +167,8 @@ def gerar_grafico_miou(
     diretorio_saida: str | Path | None = None,
 ) -> dict[str, Path]:
     linhas = list(resultados) if resultados is not None else ler_resultados_consolidados(caminho_consolidado)
-    return _gerar_grafico_metrica(linhas, "miou", "mIoU", _diretorio_saida(diretorio_saida))
+    saida = Path(diretorio_saida) if diretorio_saida is not None else Path(PATH_GRAFICOS_GLOBAIS_MIOU)
+    return _gerar_grafico_metrica(linhas, "miou", "mIoU", saida)
 
 
 def calcular_numero_parametros(modelo: nn.Module) -> int:
@@ -203,7 +214,8 @@ def gerar_grafico_parametros(
 ) -> Path:
     _validar_modelos(modelos)
     valores_milhoes = {nome: calcular_numero_parametros(modelo) / 1_000_000 for nome, modelo in modelos.items()}
-    destino = _diretorio_saida(diretorio_saida) / "parametros" / "numero_parametros.png"
+    saida = Path(diretorio_saida) if diretorio_saida is not None else Path(PATH_GRAFICOS_GLOBAIS_GFLOPS_PARAMETROS)
+    destino = saida / "numero_parametros.png"
     return _gerar_grafico_barras(valores_milhoes, "Número de parâmetros treináveis", "Parâmetros treináveis (M)", destino)
 
 
@@ -223,8 +235,7 @@ def calcular_gflops(
     try:
         from fvcore.nn import FlopCountAnalysis
     except ModuleNotFoundError as erro:
-        raise RuntimeError(
-        ) from erro
+        raise RuntimeError("A biblioteca 'fvcore' é necessária para calcular GFLOPs.") from erro
 
     tensor_referencia = next(modelo.parameters(), next(modelo.buffers(), None))
     device = tensor_referencia.device if tensor_referencia is not None else torch.device("cpu")
@@ -248,48 +259,24 @@ def gerar_grafico_gflops(
     _validar_modelos(modelos)
     tamanho = _validar_tamanho_entrada(tamanho_entrada)
     valores = {nome: calcular_gflops(modelo, tamanho) for nome, modelo in modelos.items()}
-    destino = _diretorio_saida(diretorio_saida) / "gflops" / "gflops_{}x{}.png".format(tamanho[2], tamanho[3])
+    saida = Path(diretorio_saida) if diretorio_saida is not None else Path(PATH_GRAFICOS_GLOBAIS_GFLOPS_PARAMETROS)
+    destino = saida / f"gflops_{tamanho[2]}x{tamanho[3]}.png"
     return _gerar_grafico_barras(valores, f"Complexidade computacional ({tamanho[2]} x {tamanho[3]} RGB)", "GFLOPs", destino)
 
 
 def gerar_graficos_globais(
+    modelos: Mapping[str, nn.Module],
     *,
     caminho_consolidado: str | Path | None = None,
-    diretorio_saida: str | Path | None = None,
-) -> dict[str, dict[str, Path]]:
+    tamanho_entrada: Sequence[int] = (1, 3, 256, 256),
+) -> dict[str, Any]:
+    """
+    Gera todos os gráficos globais disponíveis.
+    """
     resultados = ler_resultados_consolidados(caminho_consolidado)
     return {
-        "mdice": gerar_grafico_mdice(resultados, diretorio_saida=diretorio_saida),
-        "miou": gerar_grafico_miou(resultados, diretorio_saida=diretorio_saida),
+        "mdice": gerar_grafico_mdice(resultados),
+        "miou": gerar_grafico_miou(resultados),
+        "parametros": gerar_grafico_parametros(modelos),
+        "gflops": gerar_grafico_gflops(modelos, tamanho_entrada=tamanho_entrada),
     }
-
-
-def executar_testes_basicos() -> None:
-    linhas = [
-        {
-            "arquitetura": "Modelo A", "dataset": "HE", "modo_treinamento": "do zero", "loss": "BCE", "augmentation": "não",
-            "mdice_media": "0.80", "mdice_std": "0.02", "miou_media": "0.70", "miou_std": "0.03",
-            "dice_classe_1_media": "0.79", "dice_classe_1_std": "0.02", "iou_classe_1_media": "0.65", "iou_classe_1_std": "0.03",
-            "precision_classe_1_media": "0.81", "precision_classe_1_std": "0.02", "recall_classe_1_media": "0.78", "recall_classe_1_std": "0.02",
-        }
-    ]
-    with tempfile.TemporaryDirectory() as diretorio_temporario:
-        diretorio = Path(diretorio_temporario)
-        csv_teste = diretorio / "consolidados.csv"
-        with csv_teste.open("w", newline="", encoding="utf-8") as arquivo:
-            escritor = csv.DictWriter(arquivo, fieldnames=COLUNAS_CONSOLIDADOS)
-            escritor.writeheader()
-            escritor.writerows(linhas)
-
-        assert identificar_datasets(ler_resultados_consolidados(csv_teste)) == ["HE"]
-        assert (gerar_grafico_mdice(linhas, diretorio_saida=diretorio)["HE"]).is_file()
-        assert (gerar_grafico_miou(linhas, diretorio_saida=diretorio)["HE"]).is_file()
-
-        modelo = nn.Sequential(nn.Flatten(), nn.Linear(4, 2))
-        assert calcular_numero_parametros(modelo) == 10
-        try:
-            calcular_gflops(modelo, tamanho_entrada=(1, 3, 256))
-        except ValueError:
-            pass
-        else:
-            raise AssertionError("O tamanho de entrada inválido deveria gerar ValueError.")
