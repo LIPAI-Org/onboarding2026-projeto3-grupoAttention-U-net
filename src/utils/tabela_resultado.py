@@ -5,7 +5,6 @@ from __future__ import annotations
 import csv
 import math
 import numbers
-import tempfile
 from pathlib import Path
 from statistics import mean, stdev
 from typing import Any, Iterable, Mapping
@@ -13,7 +12,6 @@ from typing import Any, Iterable, Mapping
 import torch.nn as nn
 
 from src.utils.paths import (
-    PATH_TABELA_COMPLETA,
     PATH_TABELA_CONSOLIDADA,
     PATH_TABELA_COMPLETA
 )
@@ -24,21 +22,6 @@ from configs.basicas import (
 )
 from src.utils.graficos_globais import calcular_numero_parametros, calcular_gflops
 
-COLUNAS_EXECUCOES = (
-    "arquitetura",
-    "dataset",
-    "modo_treinamento",
-    "loss",
-    "augmentation",
-    "seed",
-    "mdice",
-    "miou",
-    "dice_classe_1",
-    "iou_classe_1",
-    "precision_classe_1",
-    "recall_classe_1",
-)
-
 COLUNAS_PLANILHA = (
     "repetition", "seed", "dataset", "task", "model", "encoder",
     "training mode", "augmentation", "loss", "input_size", "epochs",
@@ -48,13 +31,28 @@ COLUNAS_PLANILHA = (
     "num_params", "trainable_params", "gflops", "best_epoch", "val_mDice_best"
 )
 
-COLUNAS_CONFIGURACAO = COLUNAS_EXECUCOES[:5]
-COLUNAS_METRICAS = COLUNAS_EXECUCOES[6:]
+# Colunas usadas para agrupar as seeds (o que define uma configuração única)
+COLUNAS_CONFIGURACAO = (
+    "dataset", "task", "model", "encoder", "training mode", 
+    "augmentation", "loss", "input_size", "epochs", "batch_size",
+    "num_params", "trainable_params", "gflops"
+)
+
+# Colunas sobre as quais serão calculadas a média e o desvio padrão
+COLUNAS_METRICAS = (
+    "dice_background_test", "dice_foreground_test", "mDice_test", 
+    "iou_background_test", "iou_foreground_test", "mIoU_test", 
+    "precision_foreground_test", "recall_foreground_test", 
+    "best_epoch", "val_mDice_best"
+)
+
 SEEDS_ESPERADAS = (42, 123, 2025)
+
 COLUNAS_CONSOLIDADOS = (
     *COLUNAS_CONFIGURACAO,
     *(coluna for metrica in COLUNAS_METRICAS for coluna in (f"{metrica}_media", f"{metrica}_std")),
 )
+
 
 def _validar_texto(nome: str, valor: Any) -> str:
     if not isinstance(valor, str) or not valor.strip():
@@ -74,12 +72,17 @@ def _validar_metrica(nome: str, valor: Any) -> float:
     valor_float = float(valor)
     if not math.isfinite(valor_float):
         raise ValueError(f"{nome} não pode ser NaN ou infinito.")
-    if not 0.0 <= valor_float <= 1.0:
-        raise ValueError(f"{nome} deve estar no intervalo [0, 1].")
+    
+    campos_livres_de_limite = ("epoch", "param", "gflops", "batch", "size")
+    if not any(campo in nome.lower() for campo in campos_livres_de_limite):
+        if not 0.0 <= valor_float <= 1.0:
+            raise ValueError(f"{nome} ({valor_float}) deve estar no intervalo [0, 1].")
+            
     return valor_float
 
 
 def _ler_csv(caminho: Path, colunas_esperadas: Iterable[str]) -> list[dict[str, str]]:
+    caminho = Path(caminho)
     if not caminho.exists():
         return []
 
@@ -93,6 +96,7 @@ def _ler_csv(caminho: Path, colunas_esperadas: Iterable[str]) -> list[dict[str, 
 
 
 def _escrever_csv(caminho: Path, colunas: Iterable[str], linhas: Iterable[Mapping[str, Any]]) -> None:
+    caminho = Path(caminho)
     caminho.parent.mkdir(parents=True, exist_ok=True)
     with caminho.open("w", newline="", encoding="utf-8") as arquivo:
         escritor = csv.DictWriter(arquivo, fieldnames=list(colunas))
@@ -100,51 +104,10 @@ def _escrever_csv(caminho: Path, colunas: Iterable[str], linhas: Iterable[Mappin
         escritor.writerows(linhas)
 
 
-def adicionar_resultado(
-    *,
-    arquitetura: str,
-    dataset: str,
-    modo_treinamento: str,
-    loss: str,
-    augmentation: str,
-    seed: int,
-    mdice: float,
-    miou: float,
-    dice_classe_1: float,
-    iou_classe_1: float,
-    precision_classe_1: float,
-    recall_classe_1: float,
-) -> None:
-    linha: dict[str, Any] = {
-        "arquitetura": _validar_texto("arquitetura", arquitetura),
-        "dataset": _validar_texto("dataset", dataset),
-        "modo_treinamento": _validar_texto("modo_treinamento", modo_treinamento),
-        "loss": _validar_texto("loss", loss),
-        "augmentation": _validar_texto("augmentation", augmentation),
-        "seed": _validar_seed(seed),
-        "mdice": _validar_metrica("mdice", mdice),
-        "miou": _validar_metrica("miou", miou),
-        "dice_classe_1": _validar_metrica("dice_classe_1", dice_classe_1),
-        "iou_classe_1": _validar_metrica("iou_classe_1", iou_classe_1),
-        "precision_classe_1": _validar_metrica("precision_classe_1", precision_classe_1),
-        "recall_classe_1": _validar_metrica("recall_classe_1", recall_classe_1),
-    }
-    caminho = Path(PATH_TABELA_COMPLETA)
-    linhas = _ler_csv(caminho, COLUNAS_EXECUCOES)
-    chave = tuple(str(linha[coluna]) for coluna in (*COLUNAS_CONFIGURACAO, "seed"))
-
-    for existente in linhas:
-        chave_existente = tuple(existente[coluna] for coluna in (*COLUNAS_CONFIGURACAO, "seed"))
-        if chave_existente == chave:
-            raise ValueError("Esta execução já está registrada para a mesma configuração e seed.")
-
-    linhas.append(linha)
-    _escrever_csv(caminho, COLUNAS_EXECUCOES, linhas)
-
-
 def consolidar_resultados() -> None:
-    linhas = _ler_csv(PATH_TABELA_COMPLETA, COLUNAS_EXECUCOES)
+    linhas = _ler_csv(PATH_TABELA_COMPLETA, COLUNAS_PLANILHA)
     grupos: dict[tuple[str, ...], list[dict[str, str]]] = {}
+    
     for linha in linhas:
         chave = tuple(linha[coluna] for coluna in COLUNAS_CONFIGURACAO)
         grupos.setdefault(chave, []).append(linha)
@@ -158,14 +121,17 @@ def consolidar_resultados() -> None:
             )
 
         linha_consolidada: dict[str, float | str] = dict(zip(COLUNAS_CONFIGURACAO, chave))
+        
         for metrica in COLUNAS_METRICAS:
             valores = [_validar_metrica(metrica, float(execucao[metrica])) for execucao in execucoes]
             linha_consolidada[f"{metrica}_media"] = mean(valores)
             linha_consolidada[f"{metrica}_std"] = stdev(valores)
+            
         consolidados.append(linha_consolidada)
 
     consolidados.sort(key=lambda linha: tuple(str(linha[coluna]) for coluna in COLUNAS_CONFIGURACAO))
     _escrever_csv(PATH_TABELA_CONSOLIDADA, COLUNAS_CONSOLIDADOS, consolidados)
+
 
 def adicionar_resultado_completo(
     *,

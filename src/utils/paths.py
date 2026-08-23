@@ -113,11 +113,6 @@ PATH_PLOTS = os.path.join(
     "plots"
 )
 
-PATH_TABELA_COMPLETA = os.path.join(
-    PATH_METRICAS,
-    "resultados_execucoes.csv"
-)
-
 PATH_TABELA_CONSOLIDADA = os.path.join(
     PATH_METRICAS,
     "resultados_consolidados.csv"

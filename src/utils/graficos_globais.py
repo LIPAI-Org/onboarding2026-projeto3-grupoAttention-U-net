@@ -21,20 +21,18 @@ from src.utils.paths import (
 )
 
 COLUNAS_CONFIGURACAO = (
-    "arquitetura",
-    "dataset",
-    "modo_treinamento",
-    "loss",
-    "augmentation",
+    "dataset", "task", "model", "encoder", "training mode", 
+    "augmentation", "loss", "input_size", "epochs", "batch_size",
+    "num_params", "trainable_params", "gflops"
 )
+
 COLUNAS_METRICAS = (
-    "mdice",
-    "miou",
-    "dice_classe_1",
-    "iou_classe_1",
-    "precision_classe_1",
-    "recall_classe_1",
+    "dice_background_test", "dice_foreground_test", "mDice_test", 
+    "iou_background_test", "iou_foreground_test", "mIoU_test", 
+    "precision_foreground_test", "recall_foreground_test", 
+    "best_epoch", "val_mDice_best"
 )
+
 COLUNAS_CONSOLIDADOS = (
     *COLUNAS_CONFIGURACAO,
     *(coluna for metrica in COLUNAS_METRICAS for coluna in (f"{metrica}_media", f"{metrica}_std")),
@@ -51,8 +49,15 @@ def _validar_valor_metrica(nome: str, valor: Any) -> float:
         valor_float = float(valor)
     except (TypeError, ValueError) as erro:
         raise ValueError(f"{nome} deve ser numérico.") from erro
-    if not math.isfinite(valor_float) or not 0.0 <= valor_float <= 1.0:
-        raise ValueError(f"{nome} deve ser finito e pertencer ao intervalo [0, 1].")
+    if not math.isfinite(valor_float):
+        raise ValueError(f"{nome} deve ser finito.")
+    
+    # Ignora restrição [0, 1] para colunas que não são pontuações/probabilidades
+    campos_livres = ("epoch", "param", "gflops", "batch", "size")
+    if not any(campo in nome.lower() for campo in campos_livres):
+        if not 0.0 <= valor_float <= 1.0:
+            raise ValueError(f"{nome} ({valor_float}) deve pertencer ao intervalo [0, 1].")
+            
     return valor_float
 
 
@@ -83,9 +88,9 @@ def identificar_datasets(resultados: Sequence[Mapping[str, Any]]) -> list[str]:
 def _rotulo_configuracao(linha: Mapping[str, Any]) -> str:
     return "\n".join(
         (
-            str(linha["arquitetura"]),
-            str(linha["modo_treinamento"]),
-            f"{linha['loss']} | {linha['augmentation']}",
+            str(linha.get("model", "Modelo")),
+            str(linha.get("training mode", "Modo")),
+            f"{linha.get('loss', 'Loss')} | {linha.get('augmentation', 'Aug')}",
         )
     )
 
@@ -107,7 +112,7 @@ def _gerar_grafico_metrica(
         
         max_por_arq = {}
         for linha, media in zip(linhas, medias):
-            arq = str(linha.get("arquitetura", "Desconhecida")).strip()
+            arq = str(linha.get("model", "Desconhecida")).strip()
             if arq not in max_por_arq or media > max_por_arq[arq]:
                 max_por_arq[arq] = media
 
@@ -157,7 +162,7 @@ def gerar_grafico_mdice(
 ) -> dict[str, Path]:
     linhas = list(resultados) if resultados is not None else ler_resultados_consolidados(caminho_consolidado)
     saida = Path(diretorio_saida) if diretorio_saida is not None else Path(PATH_GRAFICOS_GLOBAIS_MDICE)
-    return _gerar_grafico_metrica(linhas, "mdice", "mDice", saida)
+    return _gerar_grafico_metrica(linhas, "mDice_test", "mDice", saida)
 
 
 def gerar_grafico_miou(
@@ -168,7 +173,7 @@ def gerar_grafico_miou(
 ) -> dict[str, Path]:
     linhas = list(resultados) if resultados is not None else ler_resultados_consolidados(caminho_consolidado)
     saida = Path(diretorio_saida) if diretorio_saida is not None else Path(PATH_GRAFICOS_GLOBAIS_MIOU)
-    return _gerar_grafico_metrica(linhas, "miou", "mIoU", saida)
+    return _gerar_grafico_metrica(linhas, "mIoU_test", "mIoU", saida)
 
 
 def calcular_numero_parametros(modelo: nn.Module) -> int:

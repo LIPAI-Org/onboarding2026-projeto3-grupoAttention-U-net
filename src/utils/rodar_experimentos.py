@@ -43,23 +43,23 @@ def rodar_um_experimento(experimento: Experimento):
 
     nome_arquitetura = "U-Net" if nome_modelo in ("UNETFS", "UNETPTALL") else "Attention U-Net"
     modo_treinamento = 'FS' if nome_modelo in ("UNETFS", "ATUNET") else 'PTALL'
-    try:
-        adicionar_resultado(
-            arquitetura=nome_arquitetura,
-            dataset=dataset,
-            modo_treinamento=modo_treinamento,
-            loss=nome_f_loss,
-            augmentation=str(aumento),
-            seed=seed,
-            mdice=metricas_teste["mdice"],
-            miou=metricas_teste["miou"],
-            dice_classe_1=metricas_teste["classe_1"]["dice"],
-            iou_classe_1=metricas_teste["classe_1"]["iou"],
-            precision_classe_1=metricas_teste["classe_1"]["precision"],
-            recall_classe_1=metricas_teste["classe_1"]["recall"]
-        )
-    except ValueError as e:
-        print(f"Aviso: Resultado não salvo pois {e}")
+    # try:
+    #     adicionar_resultado(
+    #         arquitetura=nome_arquitetura,
+    #         dataset=dataset,
+    #         modo_treinamento=modo_treinamento,
+    #         loss=nome_f_loss,
+    #         augmentation=str(aumento),
+    #         seed=seed,
+    #         mdice=metricas_teste["mdice"],
+    #         miou=metricas_teste["miou"],
+    #         dice_classe_1=metricas_teste["classe_1"]["dice"],
+    #         iou_classe_1=metricas_teste["classe_1"]["iou"],
+    #         precision_classe_1=metricas_teste["classe_1"]["precision"],
+    #         recall_classe_1=metricas_teste["classe_1"]["recall"]
+    #     )
+    # except ValueError as e:
+    #     print(f"Aviso: Resultado não salvo pois {e}")
 
     adicionar_resultado_completo(
         modelo=modelo,
