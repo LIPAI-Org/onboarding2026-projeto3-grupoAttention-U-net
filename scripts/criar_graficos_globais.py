@@ -8,18 +8,22 @@ sys.path.append(str(raiz_projeto))
 from src.utils.graficos_globais import gerar_graficos_globais
 from src.modelos import unet, attention_unet
 
-print("Gerando gráficos globais...")
+def script_gerar_graficos_globais():
+    print("Gerando gráficos globais...")
 
-arquivos = gerar_graficos_globais(modelos={
-    "U-Net": unet.UNetClassica(),
-    "Attention U-Net": attention_unet.AttentionUNet()
-})
+    arquivos = gerar_graficos_globais(modelos={
+        "U-Net": unet.UNetClassica(),
+        "Attention U-Net": attention_unet.AttentionUNet()
+    })
 
-for metrica, valor in arquivos.items():
-    if isinstance(valor, dict):
-        for dataset, caminho in valor.items():
-            print(f"{metrica} - {dataset}: {caminho}")
-    else:
-        print(f"{metrica}: {valor}")
+    for metrica, valor in arquivos.items():
+        if isinstance(valor, dict):
+            for dataset, caminho in valor.items():
+                print(f"{metrica} - {dataset}: {caminho}")
+        else:
+            print(f"{metrica}: {valor}")
 
-print("Gráficos globais gerados com sucesso.")
+    print("Gráficos globais gerados com sucesso.")
+
+if __name__ == '__main__':
+    script_gerar_graficos_globais()

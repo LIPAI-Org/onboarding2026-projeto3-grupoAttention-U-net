@@ -30,7 +30,7 @@ from src.utils.paths import (
     PATH_SPLIT_VAL_OEDB
 )
 
-def dividir_dataset(origem, extensao, destino_treino, destino_teste, destino_val, semente=42):
+def script_dividir_dataset(origem, extensao, destino_treino, destino_teste, destino_val, semente=42):
     random.seed(semente)
     
     arquivos = [f for f in Path(origem).iterdir() if f.is_file() and f.suffix.lower() == extensao.lower()]
@@ -52,5 +52,6 @@ def dividir_dataset(origem, extensao, destino_treino, destino_teste, destino_val
         for arquivo in lista_arquivos:
             shutil.copy(arquivo, Path(pasta_destino) / arquivo.name)
 
-dividir_dataset(PATH_RAW_HE, ".png", PATH_SPLIT_TREINO_HE, PATH_SPLIT_TESTE_HE, PATH_SPLIT_VAL_HE)
-dividir_dataset(PATH_RAW_OEDB, ".tif", PATH_SPLIT_TREINO_OEDB, PATH_SPLIT_TESTE_OEDB, PATH_SPLIT_VAL_OEDB)
+if __name__ == '__main__':
+    script_dividir_dataset(PATH_RAW_HE, ".png", PATH_SPLIT_TREINO_HE, PATH_SPLIT_TESTE_HE, PATH_SPLIT_VAL_HE)
+    script_dividir_dataset(PATH_RAW_OEDB, ".tif", PATH_SPLIT_TREINO_OEDB, PATH_SPLIT_TESTE_OEDB, PATH_SPLIT_VAL_OEDB)
