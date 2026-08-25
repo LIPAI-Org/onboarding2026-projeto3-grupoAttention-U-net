@@ -4,14 +4,20 @@ from __future__ import annotations
 
 import argparse
 import os
+import sys
 import random
+
 from dataclasses import dataclass
 from typing import Sequence
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from torch import nn
+
+raiz_projeto = Path(__file__).resolve().parent.parent
+sys.path.append(str(raiz_projeto))
 
 from configs.basicas import DEVICE, LIMIAR, NORMALIZACAO_MEAN, NORMALIZACAO_STD
 from src.data.dataloader import criar_dataloaders

@@ -4,13 +4,19 @@ from __future__ import annotations
 
 import argparse
 import os
+import sys
 import random
+
 from typing import Sequence
+from pathlib import Path
 
 import albumentations as A
 import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
+
+raiz_projeto = Path(__file__).resolve().parent.parent
+sys.path.append(str(raiz_projeto))
 
 from configs.basicas import TAM_PATCH
 from src.data.dataloader import criar_dataloaders
@@ -173,7 +179,7 @@ def gerar_verificacoes(
     return caminhos_salvos
 
 
-def main() -> None:
+def script_testar_aumentos() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--quantidade",
@@ -203,4 +209,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    script_testar_aumentos()
