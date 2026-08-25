@@ -125,12 +125,12 @@ PATH_TABELA_COMPLETA = os.path.join(
 
 PATH_MELHOR_ATUNET = os.path.join(
     PATH_MODELOS,
-    "melhor_atunet.pt"
+    "melhor_atunet"
 )
 
 PATH_MELHOR_UNET = os.path.join(
     PATH_MODELOS,
-    "melhor_unet.pt"
+    "melhor_unet"
 )
 
 PATH_PLOTS_CURVAS_APRENDIZADO = os.path.join(

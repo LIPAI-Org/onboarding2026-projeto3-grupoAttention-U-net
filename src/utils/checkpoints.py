@@ -7,16 +7,16 @@ from src.modelos.unet import UNetClassica
 from src.modelos.attention_unet import AttentionUNet
 from configs.basicas import DEVICE
 
-def salvar_checkpoint(modelo, mdice, nome_arquivo):
+def salvar_checkpoint(modelo, mdice, nome_arquivo, dataset):
     os.makedirs(PATH_MODELOS, exist_ok=True)
     caminho = os.path.join(PATH_MODELOS, f"{nome_arquivo}.pt")
     checkpoint = {'state_dict': modelo.state_dict(), 'mdice': mdice}
     torch.save(checkpoint, caminho)
     caminho_melhor = None
     if isinstance(modelo, AttentionUNet):
-        caminho_melhor = PATH_MELHOR_ATUNET
+        caminho_melhor = PATH_MELHOR_ATUNET + f'_{dataset}.pt'
     elif isinstance(modelo, UNetClassica):
-        caminho_melhor = PATH_MELHOR_UNET
+        caminho_melhor = PATH_MELHOR_UNET + f'_{dataset}.pt'
     if caminho_melhor is not None:
         if not os.path.exists(caminho_melhor):
             torch.save(checkpoint, caminho_melhor)

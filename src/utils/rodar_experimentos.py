@@ -28,6 +28,7 @@ def rodar_um_experimento(experimento: Experimento):
     modelo, melhor_mdice_val, melhor_epoca, _ = treinar_modelo(
         nome=nome,
         modelo=modelo,
+        dataset=dataset,
         dataloader_treino=dl_treino,
         dataloader_val=dl_val,
         f_loss=f_loss,

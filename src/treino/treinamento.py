@@ -25,6 +25,7 @@ import src.treino.curvas_treino as curvas_treino
 def treinar_uma_epoca(
     nome: str,
     modelo: nn.Module,
+    dataset: str,
     dataloader_treino: DataLoader,
     dataloader_val: DataLoader,
     f_loss: Callable,
@@ -51,7 +52,7 @@ def treinar_uma_epoca(
 
     loss_val, mdice_val, _ = validar(modelo, dataloader_val, f_loss)
     if mdice_val > melhor_mdice_atual:
-        salvar_checkpoint(modelo, mdice_val, nome)
+        salvar_checkpoint(modelo, mdice_val, nome, dataset)
 
     return modelo, loss_treino, loss_val, mdice_val
 
@@ -59,6 +60,7 @@ def treinar_uma_epoca(
 def treinar_modelo(
     nome: str,
     modelo: nn.Module,
+    dataset: str,
     dataloader_treino: DataLoader,
     dataloader_val: DataLoader,
     f_loss: Callable,
@@ -84,6 +86,7 @@ def treinar_modelo(
         modelo, loss_treino, loss_val, mdice_val = treinar_uma_epoca(
             nome=nome,
             modelo=modelo,
+            dataset=dataset,
             dataloader_treino=dataloader_treino,
             dataloader_val=dataloader_val,
             f_loss=f_loss,
