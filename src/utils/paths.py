@@ -108,6 +108,21 @@ PATH_MODELOS = os.path.join(
     "modelos"
 )
 
+PATH_QUALITATIVE = os.path.join(
+    PATH_RESULTS,
+    "qualitative"
+)
+
+PATH_QUALITATIVE_MOSAICOS = os.path.join(
+    PATH_QUALITATIVE,
+    "mosaicos"
+)
+
+PATH_QUALITATIVE_AUGMENTATIONS = os.path.join(
+    PATH_QUALITATIVE,
+    "augmentations"
+)
+
 PATH_PLOTS = os.path.join(
     PATH_RESULTS,
     "plots"
@@ -132,6 +147,12 @@ PATH_MELHOR_UNET = os.path.join(
     PATH_MODELOS,
     "melhor_unet"
 )
+
+# Checkpoints finais, um por arquitetura e dataset.
+PATH_MELHOR_ATUNET_HE = os.path.join(PATH_MODELOS, "melhor_atunet_HE.pt")
+PATH_MELHOR_ATUNET_OEDB = os.path.join(PATH_MODELOS, "melhor_atunet_OEDB.pt")
+PATH_MELHOR_UNET_HE = os.path.join(PATH_MODELOS, "melhor_unet_HE.pt")
+PATH_MELHOR_UNET_OEDB = os.path.join(PATH_MODELOS, "melhor_unet_OEDB.pt")
 
 PATH_PLOTS_CURVAS_APRENDIZADO = os.path.join(
     PATH_PLOTS,
