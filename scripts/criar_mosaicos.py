@@ -181,7 +181,7 @@ def gerar_mosaico(especificacao: ModelosDataset, quantidade: int, seed: int) -> 
     return caminho_saida
 
 
-def main() -> None:
+def script_gerar_mosaicos() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--quantidade",
@@ -211,4 +211,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    script_gerar_mosaicos()
