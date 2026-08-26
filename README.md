@@ -23,7 +23,7 @@
 
 ## 📌 Sobre o projeto
 
-Este projeto apresenta um pipeline completo de **segmentação semântica binária de imagens histológicas**, desenvolvido como parte do Projeto 3 do LIPAI.
+Este projeto apresenta um pipeline completo de **segmentação semântica binária de imagens histológicas**, desenvolvido como parte do Projeto 3 do onboarding de 2026 do LIPAI.
 
 O objetivo é investigar e comparar diferentes configurações de modelos de segmentação, considerando:
 
@@ -71,7 +71,7 @@ O projeto tem como principais objetivos:
 
 # 🧪 Datasets
 
-O projeto trabalha com dois conjuntos de dados histológicos, conforme especificado pelo professor.
+O projeto trabalha com dois conjuntos de dados histológicos, conforme especificado.
 
 ## 1. OralEpitheliumDB — Displasia
 
@@ -359,14 +359,6 @@ O pipeline utiliza entradas de tamanho fixo de:
 
 O processo de preparação dos dados redimensiona as imagens para esse tamanho antes de sua entrada na rede.
 
-O projeto também possui uma etapa dedicada à criação de mosaicos qualitativos das predições:
-
-```bash
-python scripts/criar_mosaicos.py
-```
-
-> **Observação:** a documentação do professor exige que, quando for utilizado um processo de geração de patches a partir de imagens maiores, sejam documentados tamanho, sobreposição, tratamento das bordas, quantidade de patches e reconstrução.
-
 ---
 
 # 📉 Funções de perda
@@ -587,7 +579,7 @@ results/metrics/resultados_consolidados.csv
 
 Esse arquivo apresenta a média e o desvio padrão das três repetições.
 
-A estrutura segue as exigências do CSV consolidado especificadas pelo professor.
+A estrutura segue as exigências do CSV consolidado especificadas.
 
 ---
 
@@ -661,7 +653,17 @@ Segmentation Models PyTorch
 
 As versões específicas devem ser definidas de acordo com o ambiente utilizado para os experimentos.
 
-> **Importante:** o repositório enviado não possui atualmente um `requirements.txt`. Recomenda-se criar esse arquivo antes da entrega final para tornar a reprodução do ambiente mais simples.
+## 4. Instalar os datasets
+
+O link para ambos está na seção <a href="#datasets">Datasets</a>
+
+## 5. "Limpar" os datasets
+
+Os datasets são organizados em várias pastas. Visando a simplicidade, as imagens devem ser colocadas em:
+```text
+data/raw/HE
+data/raw/OEDB
+```
 
 ---
 
@@ -910,7 +912,7 @@ https://data.mendeley.com/datasets/9bsc36jyrt/1
 
 # 📖 Especificação do projeto
 
-O projeto foi desenvolvido seguindo as orientações do documento:
+O projeto foi desenvolvido seguindo as orientações de um documento passado:
 
 **Projeto 3 — Segmentação Semântica em Imagens Histológicas**
 
