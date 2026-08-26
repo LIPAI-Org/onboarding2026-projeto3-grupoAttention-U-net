@@ -45,8 +45,8 @@ class ModelosDataset:
 
 
 MODELOS_POR_DATASET: Sequence[ModelosDataset] = (
-    ModelosDataset("HE", PATH_MELHOR_UNET_HE, PATH_MELHOR_ATUNET_HE),
-    ModelosDataset("OEDB", PATH_MELHOR_UNET_OEDB, PATH_MELHOR_ATUNET_OEDB),
+    ModelosDataset("HE", PATH_MELHOR_UNET_HE + ".pt", PATH_MELHOR_ATUNET_HE + ".pt"),
+    ModelosDataset("OEDB", PATH_MELHOR_UNET_OEDB + ".pt", PATH_MELHOR_ATUNET_OEDB + ".pt"),
 )
 
 

@@ -149,10 +149,10 @@ PATH_MELHOR_UNET = os.path.join(
 )
 
 # Checkpoints finais, um por arquitetura e dataset.
-PATH_MELHOR_ATUNET_HE = os.path.join(PATH_MODELOS, "melhor_atunet_HE.pt")
-PATH_MELHOR_ATUNET_OEDB = os.path.join(PATH_MODELOS, "melhor_atunet_OEDB.pt")
-PATH_MELHOR_UNET_HE = os.path.join(PATH_MODELOS, "melhor_unet_HE.pt")
-PATH_MELHOR_UNET_OEDB = os.path.join(PATH_MODELOS, "melhor_unet_OEDB.pt")
+PATH_MELHOR_ATUNET_HE = os.path.join(PATH_MODELOS, "melhor_atunet_HE")
+PATH_MELHOR_ATUNET_OEDB = os.path.join(PATH_MODELOS, "melhor_atunet_OEDB")
+PATH_MELHOR_UNET_HE = os.path.join(PATH_MODELOS, "melhor_unet_HE")
+PATH_MELHOR_UNET_OEDB = os.path.join(PATH_MODELOS, "melhor_unet_OEDB")
 
 PATH_PLOTS_CURVAS_APRENDIZADO = os.path.join(
     PATH_PLOTS,
@@ -187,4 +187,19 @@ PATH_GRAFICOS_GLOBAIS_MIOU = os.path.join(
 PATH_GRAFICOS_GLOBAIS_GFLOPS_PARAMETROS = os.path.join(
     PATH_PLOTS_GRAFICOS_GLOBAIS,
     "gflops_e_parametros"
+)
+
+PATH_MOSAICOS_ATTENTION = os.path.join(
+    PATH_QUALITATIVE,
+    "mosaicos_attention"
+)
+
+PATH_MOSAICOS_ATTENTION_HE = os.path.join(
+    PATH_MOSAICOS_ATTENTION,
+    "HE"
+)
+
+PATH_MOSAICOS_ATTENTION_OEDB = os.path.join(
+    PATH_MOSAICOS_ATTENTION,
+    "OEDB"
 )
