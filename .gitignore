@@ -1,6 +1,7 @@
 __pycache__/
 tempCodeRunnerFile.py
 *.png
+!results/qualitative/**/**/*.png
 *.tif
 *.tiff
 *.pt
