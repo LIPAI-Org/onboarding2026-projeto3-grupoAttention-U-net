@@ -17,6 +17,7 @@ def _validar_entrada(
     modelo: nn.Module,
     dataloader_teste: DataLoader,
 ) -> torch.device:
+    """Valida o modelo, o DataLoader e as configurações de avaliação."""
     if not isinstance(modelo, nn.Module):
         raise TypeError("modelo deve ser uma instância de torch.nn.Module.")
     if isinstance(LIMIAR, bool) or not isinstance(LIMIAR, numbers.Real):
@@ -34,6 +35,7 @@ def _validar_entrada(
 
 
 def _validar_batch(batch: Any) -> tuple[torch.Tensor, torch.Tensor]:
+    """Valida e retorna as imagens e máscaras de um batch."""
     if not isinstance(batch, (tuple, list)) or len(batch) != 2:
         raise ValueError("Cada batch deve conter exatamente (imagens, mascaras).")
 
@@ -56,6 +58,7 @@ def avaliar_modelo(
     modelo: nn.Module,
     dataloader_teste: DataLoader,
 ) -> MetricasBinarias:
+    """Avalia o modelo no conjunto de teste e retorna as métricas agregadas."""
     device_torch = _validar_entrada(modelo, dataloader_teste)
     modelo.eval()
     metricas_por_imagem: list[MetricasBinarias] = []
