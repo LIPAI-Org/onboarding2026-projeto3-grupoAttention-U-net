@@ -1,0 +1,6 @@
+torch
+numpy
+matplotlib
+segmentation_models_pytorch
+albumentations
+Pillow
