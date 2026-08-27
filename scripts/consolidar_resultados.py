@@ -9,7 +9,14 @@ sys.path.append(str(raiz_projeto))
 
 from src.utils.tabela_resultado import consolidar_resultados
 
-def script_consolidar_resultados():
+def script_consolidar_resultados() -> None:
+    """
+    Script para consolidar os resultados das execuções.
+
+    Os resultados consolidados ficarão em results/metrics/resultados_consolidados.csv
+    por padrão, caso deseje mudar o destino deve-se alterar a variável PATH_TABELA_CONSOLIDADA
+    em src/utils/paths.py para uma str que aponte para a tabela destino.
+    """
     try:
         consolidar_resultados()
     except (TypeError, ValueError) as e:

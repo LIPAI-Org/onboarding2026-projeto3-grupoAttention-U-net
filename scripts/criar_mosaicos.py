@@ -182,6 +182,9 @@ def gerar_mosaico(especificacao: ModelosDataset, quantidade: int, seed: int) -> 
 
 
 def script_gerar_mosaicos() -> None:
+    """
+    Script para geração dos mosaicos qualitativos de ambos os datasets
+    """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--quantidade",

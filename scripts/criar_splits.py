@@ -30,7 +30,20 @@ from src.utils.paths import (
     PATH_SPLIT_VAL_OEDB
 )
 
-def script_dividir_dataset(origem, extensao, destino_treino, destino_teste, destino_val, semente=42):
+def script_dividir_dataset(
+        origem: str,
+        extensao: str,
+        destino_treino: str,
+        destino_teste: str,
+        destino_val: str,
+        semente: int =42
+    ) -> None:
+    """
+    Script para criação dos splits dos datasets.
+
+    Deve ser executado apenas uma vez, após arrumar os
+    datasets em data/raw e antes de qualquer treinamento/teste.
+    """
     random.seed(semente)
     
     arquivos = [f for f in Path(origem).iterdir() if f.is_file() and f.suffix.lower() == extensao.lower()]

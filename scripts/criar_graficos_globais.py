@@ -8,7 +8,10 @@ sys.path.append(str(raiz_projeto))
 from src.utils.graficos_globais import gerar_graficos_globais
 from src.modelos import unet, attention_unet
 
-def script_gerar_graficos_globais():
+def script_gerar_graficos_globais() -> None:
+    """
+    Script para gerar os gráficos globais.
+    """
     print("Gerando gráficos globais...")
 
     arquivos = gerar_graficos_globais(modelos={

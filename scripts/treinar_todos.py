@@ -13,7 +13,11 @@ from src.utils.experimentos import experimentos_factory
 from src.utils.rodar_experimentos import rodar_todos_experimentos
 from src.utils.tabela_resultado import consolidar_resultados
 
-def script_rodar_todos_e_consolidar():
+def script_rodar_todos_e_consolidar() -> None:
+    """
+    Script para treinar todos os experimentos requiridos e
+    consolidar seus resultados.
+    """
     experimentos = experimentos_factory()
     rodar_todos_experimentos(experimentos)
     consolidar_resultados()

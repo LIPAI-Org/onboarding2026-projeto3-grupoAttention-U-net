@@ -4,10 +4,8 @@ import sys
 from pathlib import Path
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
-import numpy as np
 
 raiz_projeto = Path(__file__).resolve().parent.parent
 sys.path.append(str(raiz_projeto))
@@ -24,6 +22,7 @@ from src.modelos.attention_unet import AttentionUNet
 class CapturadorAtencao:
     """
     Classe para registrar um Forward Hook no PyTorch.
+
     Irá capturar a saída do bloco psi (que gera os coeficientes alpha)
     durante o passo de forward (inferência).
     """
@@ -33,7 +32,11 @@ class CapturadorAtencao:
     def __call__(self, module, entrada, saida):
         self.mapa_atencao = saida.detach()
 
-def desnormalizar_imagem(tensor_img, mean, std):
+def desnormalizar_imagem(
+        tensor_img: torch.Tensor,
+        mean: tuple[float, float, float],
+        std: tuple[float, float, float]
+    ) -> torch.Tensor:
     """
     Aplica a transformação inversa da normalização, trazendo o tensor
     de volta para o espectro visível em RGB [0, 1].
@@ -45,7 +48,19 @@ def desnormalizar_imagem(tensor_img, mean, std):
     img_desnormalizada = tensor_img * std + mean
     return torch.clamp(img_desnormalizada, 0.0, 1.0)
 
-def gerar_mosaico_dataset(nome_dataset, path_checkpoint, path_saida):
+def gerar_mosaico_dataset(
+        nome_dataset: str,
+        path_checkpoint: str,
+        path_saida: str
+    ) -> None:
+    """
+    Gera um mosáico com mapas de atenção para o dataset nome_dataset
+
+    nome_dataset deve ser HE ou OEDB
+
+    path_checkpoint deve apontar para o modelo sendo analisado
+    (localizados em results/modelos)
+    """
     print(f"\n[{nome_dataset}] Iniciando processo de extração de atenção...")
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -123,7 +138,10 @@ def gerar_mosaico_dataset(nome_dataset, path_checkpoint, path_saida):
     handle_hook.remove()
     print(f"[{nome_dataset}] Mosaico salvo com sucesso em: {caminho_arquivo}")
 
-def script_gerar_mosaicos_attention():
+def script_gerar_mosaicos_attention() -> None:
+    """
+    Script para geração dos mosáicos de ambos os datasets
+    """
     gerar_mosaico_dataset(
             nome_dataset="HE",
             path_checkpoint=PATH_MELHOR_ATUNET_HE,

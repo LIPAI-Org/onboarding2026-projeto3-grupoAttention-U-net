@@ -7,7 +7,9 @@ from src.losses.dice_loss import DiceLoss
 def pegar_f_loss(f_loss: str):
     """
     Duas funções de perda:
+
     BCE: Binary Cross Entropy com Logits
+    
     DICE: Dice loss
     """
     if f_loss.upper() == "BCE":

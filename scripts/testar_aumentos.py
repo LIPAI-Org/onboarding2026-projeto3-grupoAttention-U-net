@@ -180,6 +180,10 @@ def gerar_verificacoes(
 
 
 def script_testar_aumentos() -> None:
+    """
+    Script para gerar mosaicos para verificação
+    visual dos aumentos de dados.
+    """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--quantidade",
