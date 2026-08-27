@@ -11,6 +11,9 @@ from configs.basicas import TAM_PATCH, NORMALIZACAO_MEAN, NORMALIZACAO_STD
 
 
 def obter_transformacoes(aplicar_aug: bool) -> A.Compose:
+    """
+    Pega as transformações, caso utilize.
+    """
     passos: List[Any] = [
         A.Resize(height=TAM_PATCH, width=TAM_PATCH, p=1.0)
     ]

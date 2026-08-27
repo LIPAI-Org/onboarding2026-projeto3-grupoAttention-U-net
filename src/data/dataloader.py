@@ -19,6 +19,14 @@ def criar_dataloaders(
     num_workers: int, 
     aplicar_aug: bool = False
 ) -> Tuple[DataLoader, DataLoader, DataLoader]:
+    """
+    Cria os dataloaders de treino, validação e teste de um dos datasets.
+
+    nome_dataset deve ser ou "HE" ou "OEDB".
+
+    O retorno é na seguinte ordem: dataloader de treino, dataloader de
+    validação e dataloader de teste.
+    """
 
     dominio = nome_dataset.upper()
     

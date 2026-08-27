@@ -15,6 +15,10 @@ from torch.utils.data import Dataset
 from src.data.transformadas import obter_transformacoes
 
 class HistologiaDataset(Dataset):
+    """
+    Dataset PyTorch para tarefas de segmentação semântica em imagens
+    histológicas.
+    """
     def __init__(
         self, 
         diretorio_imagens: str, 
@@ -29,6 +33,9 @@ class HistologiaDataset(Dataset):
         self.amostras = self._mapear_arquivos()
 
     def _mapear_arquivos(self) -> List[Tuple[str, str]]:
+        """
+        Mapeia a imagem original com a máscara desta.
+        """
         amostras: List[Tuple[str, str]] = []
         arquivos_presentes = os.listdir(self.diretorio_imagens)
 

@@ -6,8 +6,13 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from typing import List
+
 class BlocoConvolucional(nn.Module):
-    def __init__(self, canais_entrada, canais_saida):
+    """
+    O bloco convolucional da Attention U-Net usada.
+    """
+    def __init__(self, canais_entrada: int, canais_saida: int) -> None:
         super().__init__()
         self.conv = nn.Sequential(
             nn.Conv2d(canais_entrada, canais_saida, kernel_size=3, padding=1, bias=False),
@@ -18,11 +23,19 @@ class BlocoConvolucional(nn.Module):
             nn.ReLU(inplace=True)
         )
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.conv(x)
 
 class PortaoAtencao(nn.Module):
-    def __init__(self, canais_x, canais_g, canais_inter):
+    """
+    O Attention Gate da Attention U-Net usada.
+    """
+    def __init__(
+            self,
+            canais_x: int,
+            canais_g: int,
+            canais_inter: int
+        ) -> None:
         super().__init__()
         
         self.W_g = nn.Sequential(
@@ -43,7 +56,7 @@ class PortaoAtencao(nn.Module):
         
         self.relu = nn.ReLU(inplace=True)
 
-    def forward(self, x, g):
+    def forward(self, x: torch.Tensor, g: torch.Tensor) -> torch.Tensor:
         g_proj = self.W_g(g)
         x_proj = self.W_x(x)
         
@@ -59,7 +72,15 @@ class PortaoAtencao(nn.Module):
         return x * coeficientes_atencao
 
 class AttentionUNet(nn.Module):
-    def __init__(self, canais_entrada=3, classes_saida=1, filtros=[64, 128, 256, 512, 1024]):
+    """
+    A Attention U-Net usada.
+    """
+    def __init__(
+            self,
+            canais_entrada: int = 3,
+            classes_saida: int = 1,
+            filtros: List[int] = [64, 128, 256, 512, 1024]
+        ) -> None:
         super().__init__()
         
         self.maxpool = nn.MaxPool2d(kernel_size=2, stride=2)
@@ -89,7 +110,7 @@ class AttentionUNet(nn.Module):
         
         self.saida = nn.Conv2d(filtros[0], classes_saida, kernel_size=1)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         e1 = self.encoder1(x)
         
         e2 = self.encoder2(self.maxpool(e1))

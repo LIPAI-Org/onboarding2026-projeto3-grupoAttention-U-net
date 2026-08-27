@@ -2,11 +2,18 @@ import torch
 import torch.nn as nn
 
 class DiceLoss(nn.Module):
-    def __init__(self, smooth=1.0):
+    """
+    Função de perda por Dice.
+    """
+    def __init__(self, smooth: float = 1.0) -> None:
         super(DiceLoss, self).__init__()
         self.smooth = smooth
 
-    def forward(self, pred, target):
+    def forward(
+            self,
+            pred: torch.Tensor,
+            target: torch.Tensor
+        ) -> torch.Tensor:
         pred = torch.sigmoid(pred)
         
         pred = pred.view(pred.size(0), -1)

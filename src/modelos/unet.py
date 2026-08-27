@@ -7,8 +7,18 @@ Encoder usado: resnet34
 import torch.nn as nn
 import segmentation_models_pytorch as smp
 
+from torch import Tensor
+
 class UNetClassica(nn.Module):
-    def __init__(self, canais_entrada=3, classes_saida=1, usar_pesos_imagenet=True):
+    """
+    U-Net classica, vinda de segmentation_models_pytorch
+    """
+    def __init__(
+            self,
+            canais_entrada: int = 3,
+            classes_saida: int = 1,
+            usar_pesos_imagenet: bool =True
+        ) -> None:
         super().__init__()
         
         pesos = "imagenet" if usar_pesos_imagenet else None
@@ -20,5 +30,5 @@ class UNetClassica(nn.Module):
             classes=classes_saida,
         )
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         return self.modelo(x)
