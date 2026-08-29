@@ -8,6 +8,7 @@ from src.modelos.attention_unet import AttentionUNet
 from configs.basicas import DEVICE
 
 def salvar_checkpoint(modelo, mdice, nome_arquivo, dataset):
+    """Salva o checkpoint do modelo."""
     os.makedirs(PATH_MODELOS, exist_ok=True)
     caminho = os.path.join(PATH_MODELOS, f"{nome_arquivo}.pt")
     checkpoint = {'state_dict': modelo.state_dict(), 'mdice': mdice}
@@ -26,6 +27,7 @@ def salvar_checkpoint(modelo, mdice, nome_arquivo, dataset):
                 torch.save(checkpoint, caminho_melhor)
 
 def carregar_checkpoint(modelo, nome_arquivo):
+    """Carrega o checkpoint do modelo."""
     caminho = os.path.join(PATH_MODELOS, f"{nome_arquivo}.pt")
     checkpoint = torch.load(caminho, map_location=DEVICE)
     modelo.load_state_dict(checkpoint['state_dict'])

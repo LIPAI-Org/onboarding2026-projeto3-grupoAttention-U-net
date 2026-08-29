@@ -3,6 +3,7 @@
 from configs.experimentos import COMBINACOES
 
 class Experimento:
+    """Representa um experimento utilizado no treinamento."""
     def __init__(self, modelo, dataset, f_loss, aumento, seed):
         self._modelo = modelo
         self._dataset = dataset

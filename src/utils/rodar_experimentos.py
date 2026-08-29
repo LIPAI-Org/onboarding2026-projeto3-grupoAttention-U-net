@@ -10,6 +10,7 @@ from src.avaliacao.avaliador import avaliar_modelo
 from src.utils.tabela_resultado import adicionar_resultado_completo
 
 def rodar_um_experimento(experimento: Experimento):
+    """Executa um experimento completo de treinamento e avaliação."""
     nome_modelo = experimento.get_modelo().upper()
     dataset = experimento.get_dataset()
     aumento = experimento.get_aumento()
@@ -64,5 +65,6 @@ def rodar_um_experimento(experimento: Experimento):
     )
 
 def rodar_todos_experimentos(experimentos):
+    """Executa todos os experimentos fornecidos."""
     for experimento in experimentos:
         rodar_um_experimento(experimento)

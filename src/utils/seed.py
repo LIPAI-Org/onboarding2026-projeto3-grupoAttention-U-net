@@ -4,6 +4,7 @@ import numpy as np
 import torch
 
 def fixar_seed(seed: int) -> None:
+    "Fixa uma seed."
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)

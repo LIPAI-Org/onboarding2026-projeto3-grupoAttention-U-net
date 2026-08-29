@@ -10,6 +10,7 @@ from src.utils.paths import (
 )
 
 def plotar_losses(nome: str, historico_loss_treino: List[float], historico_loss_val: List[float]):
+    """Plota e salva as curvas de loss de treino e validação."""
 
     plt.figure(figsize=(10, 6))
     
@@ -29,6 +30,7 @@ def plotar_losses(nome: str, historico_loss_treino: List[float], historico_loss_
     plt.close()
 
 def plotar_mdice_val(nome: str, historico_mdice_val: List[float]):
+    """Plota e salva a curva de mDice de validação."""
 
     plt.figure(figsize=(10, 6))
     

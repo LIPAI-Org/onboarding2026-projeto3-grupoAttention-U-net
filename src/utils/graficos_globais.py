@@ -40,11 +40,13 @@ COLUNAS_CONSOLIDADOS = (
 
 
 def _slug(texto: str) -> str:
+    """Converte o texto para um formato adequado para nomes de arquivos."""
     resultado = re.sub(r"[^A-Za-z0-9_-]+", "_", texto.strip())
     return resultado.strip("_") or "dataset"
 
 
 def _validar_valor_metrica(nome: str, valor: Any) -> float:
+    """Valida e converte um valor de métrica para float."""
     try:
         valor_float = float(valor)
     except (TypeError, ValueError) as erro:
@@ -62,6 +64,7 @@ def _validar_valor_metrica(nome: str, valor: Any) -> float:
 
 
 def ler_resultados_consolidados(caminho: str | Path | None = None) -> list[dict[str, str]]:
+    """Lê os resultados consolidados de um arquivo CSV."""
     caminho_csv = Path(caminho) if caminho is not None else Path(PATH_TABELA_CONSOLIDADA)
     if not caminho_csv.is_file():
         raise FileNotFoundError(f"CSV consolidado não encontrado: {caminho_csv}")
@@ -78,6 +81,7 @@ def ler_resultados_consolidados(caminho: str | Path | None = None) -> list[dict[
 
 
 def identificar_datasets(resultados: Sequence[Mapping[str, Any]]) -> list[str]:
+    """Identifica os datasets presentes nos resultados."""
     datasets = {str(linha.get("dataset", "")).strip() for linha in resultados}
     datasets.discard("")
     if not datasets:
@@ -86,6 +90,7 @@ def identificar_datasets(resultados: Sequence[Mapping[str, Any]]) -> list[str]:
 
 
 def _rotulo_configuracao(linha: Mapping[str, Any]) -> str:
+    """Gera o rótulo de uma configuração experimental."""
     return "\n".join(
         (
             str(linha.get("model", "Modelo")),
@@ -101,6 +106,7 @@ def _gerar_grafico_metrica(
     titulo: str,
     diretorio_saida: Path,
 ) -> dict[str, Path]:
+    """Gera gráficos de uma métrica para cada dataset."""
     col_media, col_std = f"{metrica}_media", f"{metrica}_std"
     arquivos: dict[str, Path] = {}
 
@@ -160,6 +166,7 @@ def gerar_grafico_mdice(
     caminho_consolidado: str | Path | None = None,
     diretorio_saida: str | Path | None = None,
 ) -> dict[str, Path]:
+    """Gera gráficos comparativos de mDice."""
     linhas = list(resultados) if resultados is not None else ler_resultados_consolidados(caminho_consolidado)
     saida = Path(diretorio_saida) if diretorio_saida is not None else Path(PATH_GRAFICOS_GLOBAIS_MDICE)
     return _gerar_grafico_metrica(linhas, "mDice_test", "mDice", saida)
@@ -171,18 +178,21 @@ def gerar_grafico_miou(
     caminho_consolidado: str | Path | None = None,
     diretorio_saida: str | Path | None = None,
 ) -> dict[str, Path]:
+    """Gera gráficos comparativos de mIoU."""
     linhas = list(resultados) if resultados is not None else ler_resultados_consolidados(caminho_consolidado)
     saida = Path(diretorio_saida) if diretorio_saida is not None else Path(PATH_GRAFICOS_GLOBAIS_MIOU)
     return _gerar_grafico_metrica(linhas, "mIoU_test", "mIoU", saida)
 
 
 def calcular_numero_parametros(modelo: nn.Module) -> int:
+    """Calcula o número de parâmetros treináveis do modelo."""
     if not isinstance(modelo, nn.Module):
         raise TypeError("modelo deve ser uma instância de torch.nn.Module.")
     return sum(parametro.numel() for parametro in modelo.parameters() if parametro.requires_grad)
 
 
 def _validar_modelos(modelos: Mapping[str, nn.Module]) -> None:
+    """Valida o mapeamento de modelos fornecido."""
     if not isinstance(modelos, Mapping) or not modelos:
         raise ValueError("modelos deve ser um mapeamento não vazio de nomes para modelos.")
     if any(not isinstance(nome, str) or not nome.strip() for nome in modelos):
@@ -197,6 +207,7 @@ def _gerar_grafico_barras(
     eixo_y: str,
     destino: Path,
 ) -> Path:
+    """Gera e salva um gráfico de barras."""
     figura, eixo = plt.subplots(figsize=(max(7.0, len(valores) * 2.2), 5.5))
     nomes, numeros = list(valores.keys()), list(valores.values())
     barras = eixo.bar(nomes, numeros)
@@ -217,6 +228,7 @@ def _gerar_grafico_barras(
 def gerar_grafico_parametros(
     modelos: Mapping[str, nn.Module], *, diretorio_saida: str | Path | None = None
 ) -> Path:
+    """Gera um gráfico comparativo de parâmetros treináveis."""
     _validar_modelos(modelos)
     valores_milhoes = {nome: calcular_numero_parametros(modelo) / 1_000_000 for nome, modelo in modelos.items()}
     saida = Path(diretorio_saida) if diretorio_saida is not None else Path(PATH_GRAFICOS_GLOBAIS_GFLOPS_PARAMETROS)
@@ -225,6 +237,7 @@ def gerar_grafico_parametros(
 
 
 def _validar_tamanho_entrada(tamanho_entrada: Sequence[int]) -> tuple[int, int, int, int]:
+    """Valida o tamanho de entrada do modelo."""
     if len(tamanho_entrada) != 4 or any(isinstance(valor, bool) or not isinstance(valor, int) or valor <= 0 for valor in tamanho_entrada):
         raise ValueError("tamanho_entrada deve ter quatro inteiros positivos: [N, C, H, W].")
     return tuple(tamanho_entrada)  # type: ignore[return-value]
@@ -234,6 +247,7 @@ def calcular_gflops(
     modelo: nn.Module,
     tamanho_entrada: Sequence[int] = (1, 3, 256, 256),
 ) -> float:
+    """Calcula a quantidade de GFLOPs do modelo."""
     if not isinstance(modelo, nn.Module):
         raise TypeError("modelo deve ser uma instância de torch.nn.Module.")
     tamanho = _validar_tamanho_entrada(tamanho_entrada)
@@ -261,6 +275,7 @@ def gerar_grafico_gflops(
     tamanho_entrada: Sequence[int] = (1, 3, 256, 256),
     diretorio_saida: str | Path | None = None,
 ) -> Path:
+    """Gera um gráfico comparativo de GFLOPs."""
     _validar_modelos(modelos)
     tamanho = _validar_tamanho_entrada(tamanho_entrada)
     valores = {nome: calcular_gflops(modelo, tamanho) for nome, modelo in modelos.items()}
@@ -275,9 +290,7 @@ def gerar_graficos_globais(
     caminho_consolidado: str | Path | None = None,
     tamanho_entrada: Sequence[int] = (1, 3, 256, 256),
 ) -> dict[str, Any]:
-    """
-    Gera todos os gráficos globais disponíveis.
-    """
+    """Gera todos os gráficos globais disponíveis."""
     resultados = ler_resultados_consolidados(caminho_consolidado)
     return {
         "mdice": gerar_grafico_mdice(resultados),

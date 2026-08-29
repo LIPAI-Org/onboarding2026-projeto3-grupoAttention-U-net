@@ -55,18 +55,21 @@ COLUNAS_CONSOLIDADOS = (
 
 
 def _validar_texto(nome: str, valor: Any) -> str:
+    """Valida um texto não vazio."""
     if not isinstance(valor, str) or not valor.strip():
         raise ValueError(f"{nome} deve ser uma string não vazia.")
     return valor.strip()
 
 
 def _validar_seed(seed: Any) -> int:
+    """Valida e converte uma seed para inteiro."""
     if isinstance(seed, bool) or not isinstance(seed, numbers.Integral):
         raise TypeError("seed deve ser um número inteiro.")
     return int(seed)
 
 
 def _validar_metrica(nome: str, valor: Any) -> float:
+    """Valida e converte uma métrica para float."""
     if isinstance(valor, bool) or not isinstance(valor, numbers.Real):
         raise TypeError(f"{nome} deve ser numérica.")
     valor_float = float(valor)
@@ -82,6 +85,7 @@ def _validar_metrica(nome: str, valor: Any) -> float:
 
 
 def _ler_csv(caminho: Path, colunas_esperadas: Iterable[str]) -> list[dict[str, str]]:
+    """Lê um arquivo CSV e valida suas colunas."""
     caminho = Path(caminho)
     if not caminho.exists():
         return []
@@ -96,6 +100,7 @@ def _ler_csv(caminho: Path, colunas_esperadas: Iterable[str]) -> list[dict[str, 
 
 
 def _escrever_csv(caminho: Path, colunas: Iterable[str], linhas: Iterable[Mapping[str, Any]]) -> None:
+    """Escreve os resultados em um arquivo CSV."""
     caminho = Path(caminho)
     caminho.parent.mkdir(parents=True, exist_ok=True)
     with caminho.open("w", newline="", encoding="utf-8") as arquivo:
@@ -105,6 +110,7 @@ def _escrever_csv(caminho: Path, colunas: Iterable[str], linhas: Iterable[Mappin
 
 
 def consolidar_resultados() -> None:
+    """Consolida os resultados das diferentes seeds."""
     linhas = _ler_csv(PATH_TABELA_COMPLETA, COLUNAS_PLANILHA)
     grupos: dict[tuple[str, ...], list[dict[str, str]]] = {}
     
@@ -153,6 +159,7 @@ def adicionar_resultado_completo(
     val_mDice_best: float,
     task: str = "segmentacao_binaria"
 ) -> None:
+    """Adiciona os resultados de um experimento ao arquivo CSV."""
     nome_modelo = modelo.__class__.__name__
     if nome_modelo == "UNetClassica":
         encoder = "resnet34"

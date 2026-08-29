@@ -6,6 +6,7 @@ from configs.basicas import DEVICE
 from src.avaliacao.metricas import calcular_metricas_por_imagem, agregar_metricas
 
 def validar(modelo, dataloader_val, f_loss):
+    """Valida o modelo e calcula as métricas de desempenho."""
     modelo.eval()
     todas_metricas_imagens = []
     

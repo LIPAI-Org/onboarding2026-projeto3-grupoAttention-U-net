@@ -32,6 +32,7 @@ def treinar_uma_epoca(
     melhor_mdice_atual: float,
     otimizador: torch.optim.Optimizer,
 ) -> Tuple[nn.Module, float, float, float]:
+    """Treina o modelo por uma época e realiza a validação."""
 
     modelo.train()
     soma_loss_treino = 0.0
@@ -66,6 +67,7 @@ def treinar_modelo(
     f_loss: Callable,
     seed: int,
 ) -> Tuple[nn.Module, float, Dict[str, List[float]]]:
+    """Treina o modelo e registra seu histórico de desempenho."""
     
     fixar_seed(seed)
     modelo = modelo.to(DEVICE)
